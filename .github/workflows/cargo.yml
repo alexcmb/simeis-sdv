@@ -1,6 +1,7 @@
-name: CI
-on: [push, pull_request]
-
+name: CI 
+on:
+  push:
+  pull_request:
 jobs:
   test:
     name: cargo test
@@ -16,3 +17,9 @@ jobs:
       #   uses: dtolnay/rust-toolchain@stable
       - name: make check
         run: make check
+
+      - name: make test
+        run: make unit_tests
+
+      - name: make clean
+        run: make clean
