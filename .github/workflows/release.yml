@@ -1,4 +1,4 @@
-name: Release
+name: WILLIAM_Release
 on:
   pull_request:
     branches:
