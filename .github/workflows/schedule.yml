@@ -1,4 +1,4 @@
-name: Update
+name: WILLIAM_Update
 on:
   schedule:
     - cron: "*/2 * * * *"
