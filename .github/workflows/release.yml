@@ -4,7 +4,7 @@ on:
     branches:
       - 'main'
 jobs:
-  test:
+  release:
     name: cargo test
     runs-on: ubuntu-latest
     container:

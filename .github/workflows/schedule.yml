@@ -1,0 +1,14 @@
+name: Update
+on:
+  schedule:
+    - cron: "*/2 * * * *"
+jobs:
+  update:
+    name: update dependancies
+    runs-on: ubuntu-latest
+    container:
+      image: rust:trixie
+    steps:
+
+      - name: update cargo dependancies
+        run: cargo update
