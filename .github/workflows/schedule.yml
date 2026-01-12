@@ -1,7 +1,7 @@
 name: WILLIAM_Update
 on:
   schedule:
-    - cron: "*/2 * * * *"
+    - cron: "*/5 * * * *"
 jobs:
   update:
     name: update dependancies
@@ -9,6 +9,7 @@ jobs:
     container:
       image: rust:trixie
     steps:
+      - uses: actions/checkout@v4
 
       - name: update cargo dependancies
         run: cargo update
