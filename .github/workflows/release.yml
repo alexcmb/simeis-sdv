@@ -1,0 +1,26 @@
+name: Release
+on:
+  pull_request:
+    branches:
+      - 'main'
+jobs:
+  test:
+    name: cargo test
+    runs-on: ubuntu-latest
+    container:
+      image: rust:trixie
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install typst
+        run: snap install typst -y
+
+      - name: build cargo make
+        run: make release 
+      
+      - name: make documentation 
+        run: make documentation
+      
+      - name: make clean
+        run: make clean
+  
