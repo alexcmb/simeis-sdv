@@ -2,6 +2,11 @@ name: WILLIAM_Update
 on:
   schedule:
     - cron: "*/5 * * * *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update:
     name: update dependancies
@@ -13,3 +18,11 @@ jobs:
 
       - name: update cargo dependancies
         run: cargo update
+
+      - name: Create Pull Request if there is an update
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: "update dependencies"
+          title: "Update Rust dependencies"
+          body: "Automated cargo update"
+          branch: "bot/update"
