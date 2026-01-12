@@ -5,7 +5,7 @@ on:
       - 'main'
 jobs:
   release:
-    name: cargo test
+    name: cargo build
     runs-on: ubuntu-latest
     container:
       image: rust:trixie
