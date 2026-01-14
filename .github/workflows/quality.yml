@@ -42,6 +42,7 @@ jobs:
         run: make check
 
       - name: Cache python venv
+        id: cache-python
         uses: actions/cache@v4
         with:
           path: .venv
@@ -49,8 +50,9 @@ jobs:
 
       - name: Setup Python venv
         run: python -m venv .venv
-
-      - name: Activate venv and install black
+      
+      - if: ${{ steps.cache-python.outputs.cache-hit != 'true' }}        
+        name: Activate venv and install black
         run: |
           . .venv/bin/activate
           pip install black
