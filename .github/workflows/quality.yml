@@ -12,6 +12,8 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    container:
+      image: python:slim-bookworm
 
     steps:
       - name: Checkout repository
@@ -28,20 +30,19 @@ jobs:
       - name: Cargo check
         run: make check
 
-      - name: Cache python packages
-        id: cache-python
-        uses: actions/cache@v4
-        with:
-          path: |
-              /usr/local/cargo/registry
-              /usr/local/cargo/bin
-          key: python-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+      # - name: Cache python packages
+      #   id: cache-python
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #         /?
+      #     key: python-${{ runner.os }}-${{ hashFiles('**/?.lock') }}
 
-      - if: ${{ steps.cache-cargo.outputs.cache-hit != 'true' }}        
-        name: Install Python tools
-        run: |
-          python3 -m pip install --upgrade pip
-          pip install black
+      # - if: ${{ steps.cache-python.outputs.cache-hit != 'true' }}        
+      #   name: Install Python tools
+      #   run: |
+      #     python3 -m pip install --upgrade pip
+      #     pip install black
 
       - name: Check Python formatting
         run: make python-check
