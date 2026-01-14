@@ -4,9 +4,7 @@ on:
   pull_request:
     branches:
       - 'main'
-  push:
-    branches:
-      - 'feature/*'
+
 jobs:
   release:
     name: cargo build
