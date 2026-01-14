@@ -32,7 +32,7 @@ jobs:
         name: Ajout path cargo
         run: echo "PATH=$HOME/.cargo/bin:$PATH" >> "$GITHUB_ENV"
 
-#Install rust +fmt
+#Install rust +fm
       - if: ${{ steps.cache-rust-quality.outputs.cache-hit != 'true' }}        
         name: Install Rust
         uses: actions-rs/toolchain@v1
