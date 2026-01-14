@@ -1,5 +1,5 @@
 #WILLIAM
-name: WILLIAM_Release
+name: Release
 on:
   pull_request:
     branches:
@@ -37,4 +37,3 @@ jobs:
       
       - name: make clean
         run: make clean
-  
