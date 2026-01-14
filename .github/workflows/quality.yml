@@ -19,8 +19,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache rust packages
+        id: cache-rust-quality
+        uses: actions/cache@v4
+        with:
+          path: |
+               /usr/local/cargo/registry
+               /usr/local/cargo/bin
+          key: rust-${{ runner.os }}-${{ hashFiles('**/cargo.lock') }}
+
 #Install rust +fmt
-      - name: Install Rust
+      - if: ${{ steps.cache-rust-quality.outputs.cache-hit != 'true' }}        
+        name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -30,18 +40,19 @@ jobs:
       - name: Cargo check
         run: make check
 
-      - name: Cache python packages
-        id: cache-python
+      - name: Cache python venv
         uses: actions/cache@v4
         with:
-          path: ~/.cache/pip
-          key: python-${{ runner.os }}-black
+          path: .venv
+          key: python-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
 
-      - if: ${{ steps.cache-python.outputs.cache-hit != 'true' }}        
-        name: Install Python tools
-        run: pip install black
+      - name: Setup Python venv
+        run: python -m venv .venv
 
-      #     python3 -m pip install --upgrade pip
+      - name: Activate venv and install black
+        run: |
+          source .venv/bin/activate
+          pip install black
 
       - name: Check Python formatting
-        run: make python-check
+        run: .venv/bin/black --check .
