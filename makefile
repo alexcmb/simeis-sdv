@@ -12,6 +12,7 @@ debug:
 documentation:
 	typst compile doc/manual.typ
 check:
+	whereis cargo
 	cargo check
 	cargo fmt --check
 	cargo clippy
