@@ -13,6 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: |
+          apt update
+          apt install -y curl xz-utils
+
       - name: Install typst
         run: |
           apt update
