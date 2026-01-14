@@ -27,9 +27,12 @@ jobs:
               ~/.cargo/registry
               ~/.cargo/git
               ~/.cargo/bin
-              /github/home/.cargo/bin/cargo
               target
           key: rust-quality-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - if: ${{ steps.cache-rust-quality.outputs.cache-hit == 'true' }}        
+        name: Ajout path cargo
+        run: echo "PATH=$HOME/.cargo/bin:$PATH" >> "$GITHUB_ENV"
 
 #Install rust +fmt
       - if: ${{ steps.cache-rust-quality.outputs.cache-hit != 'true' }}        
