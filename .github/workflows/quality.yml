@@ -13,7 +13,7 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     container:
-      image: python:slim-bookworm
+      image: 3.13.11-bookworm
 
     steps:
       - name: Checkout repository
