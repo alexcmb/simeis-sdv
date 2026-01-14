@@ -1,0 +1,21 @@
+name: Vérification TODO
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  todos:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Vérifier les TODO
+        run: bash check-todo.sh
