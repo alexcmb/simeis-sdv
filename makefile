@@ -5,7 +5,7 @@ release:
 	RUSTFLAGS="-C code-model=kernel -C codegen-units=1" cargo build --release
 	strip target/release/$(prog_name)
 debug:
-	cargo build 
+	cargo build --features heavy-testing
 	strip target/debug/$(prog_name)
 # install:
 # 	cp target/$(target)/$(prog_name) ~/bin/$(prog_name)$(extension)
@@ -19,8 +19,13 @@ check:
 python-check:
 	@echo "Vérification du formatage avec black..."
 	@black --check . || (echo "Formatage incorrect, correction en cours..." && black .)
-unit_tests:
-	cargo test
+unit_test:
+	cargo test --features heavy-testing 
+# Ajout features heavy-testing
+audit:
+	cargo-audit
+	cargo-udeps
+
 clean:
 	cargo clean
 
