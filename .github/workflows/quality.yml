@@ -30,19 +30,18 @@ jobs:
       - name: Cargo check
         run: make check
 
-      # - name: Cache python packages
-      #   id: cache-python
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: |
-      #         /?
-      #     key: python-${{ runner.os }}-${{ hashFiles('**/?.lock') }}
+      - name: Cache python packages
+        id: cache-python
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: python-${{ runner.os }}-black
 
-      # - if: ${{ steps.cache-python.outputs.cache-hit != 'true' }}        
-      #   name: Install Python tools
-      #   run: |
+      - if: ${{ steps.cache-python.outputs.cache-hit != 'true' }}        
+        name: Install Python tools
+        run: pip install black
+
       #     python3 -m pip install --upgrade pip
-      #     pip install black
 
       - name: Check Python formatting
         run: make python-check
