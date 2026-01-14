@@ -1,0 +1,20 @@
+name: analyse-avancé
+
+on:
+  push:
+    branches:
+      - 'release/*'  
+      
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cargo unit test
+        run: make unit_test
+
+      - name: Check Python formatting
+        run: python3 test/unit-test.py
+
+      - name: audit rust
+        run: make audit
