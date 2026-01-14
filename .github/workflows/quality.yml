@@ -14,6 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+#Install rust +fmt
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:

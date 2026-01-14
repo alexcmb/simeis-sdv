@@ -27,6 +27,6 @@ clean:
 
 # all: release install
 
-#Make help
+#Make helps
 help:
 	@echo "make debug=1 pour debug ou make sans options pour release"
