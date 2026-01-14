@@ -1,9 +1,10 @@
 name: analyse-avancé
 
 on:
-  merge:
-    branche:[release/*]
-
+  push:
+    branches:
+      - 'release/*'  
+      
 jobs:
   quality:
     runs-on: ubuntu-latest
