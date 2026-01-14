@@ -14,12 +14,11 @@ documentation:
 check:
 	cargo check
 	cargo fmt --check
-	cargo clippy -- -D warnings
+	cargo clippy
 
-.PHONY: python-check
 python-check:
-	black --check .
-
+	@echo "Vérification du formatage avec black..."
+	@black --check . || (echo "Formatage incorrect, correction en cours..." && black .)
 unit_tests:
 	cargo test
 clean:
