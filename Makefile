@@ -19,7 +19,7 @@ manual:
 .PHONY: check
 check:
         @echo "=== Vérification du code ==="
-        caro check
+        cargo check
         cargo fmt -- --check
         cargo clippy -- -D warnings
 
