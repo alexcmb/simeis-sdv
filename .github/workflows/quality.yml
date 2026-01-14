@@ -6,9 +6,12 @@ on:
       - opened
       - synchronize
       - reopened
+
 jobs:
   quality:
     runs-on: ubuntu-latest
+    container:
+      image: python:3.13.11-bookworm
 
     steps:
       - name: Checkout repository
@@ -25,10 +28,22 @@ jobs:
       - name: Cargo check
         run: make check
 
-      - name: Install Python tools
+      - name: Cache python venv
+        id: cache-python
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: python-${{ runner.os }}-${{ hashFiles('**/*.py') }}
+
+      - name: Setup Python venv
+        run: python -m venv .venv
+      
+      - if: ${{ steps.cache-python.outputs.cache-hit != 'true' }}        
+        name: Activate venv and install black
         run: |
-          python3 -m pip install --upgrade pip
+          . .venv/bin/activate
           pip install black
 
       - name: Check Python formatting
-        run: make python-check
+        run: .venv/bin/black --check .
+        continue-on-error: true

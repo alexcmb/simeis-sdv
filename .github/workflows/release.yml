@@ -1,9 +1,10 @@
-#WILLIAM
-name: WILLIAM_Release
+#WILLIAM.
+name: Release cargo
 on:
   pull_request:
     branches:
       - 'main'
+
 jobs:
   release:
     name: cargo build
@@ -13,12 +14,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          apt update
-          apt install -y curl xz-utils
+      - name: Cache cargo packages
+        id: cache-cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+              /usr/local/cargo/registry
+              /usr/local/cargo/bin
+          key: cargo-typst-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install typst
+      - if: ${{ steps.cache-cargo.outputs.cache-hit != 'true' }}        
+        name: Install typst
         run: cargo install typst-cli
 
       - name: build cargo make
@@ -29,4 +35,3 @@ jobs:
       
       - name: make clean
         run: make clean
-  
