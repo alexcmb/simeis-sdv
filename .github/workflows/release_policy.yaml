@@ -1,0 +1,21 @@
+#William
+name: Enforce release branch policy
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  check-release-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close pull request if policy violated
+        if: >
+          ${{
+            startsWith(github.event.pull_request.base.ref, 'release/')
+            && github.event.pull_request.head.ref != 'main'
+            && !startsWith(github.event.pull_request.head.ref, 'bug/')
+          }}
+        uses: superbrothers/close-pull-request@v3
+        with:
+          comment: "You cannot merge on release from other branches than main or bug/*"
