@@ -19,31 +19,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache rust packages
-        id: cache-rust-quality
-        uses: actions/cache@v4
-        with:
-          path: |
-              ~/.cargo
-              target
-          key: rust-quality-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
-
-      - if: ${{ steps.cache-rust-quality.outputs.cache-hit == 'true' }}        
-        name: Ajout path cargo
-        run: echo "PATH=$HOME/.cargo/bin:$PATH" >> "$GITHUB_ENV"
-
-#Install rust +fm
-      - if: ${{ steps.cache-rust-quality.outputs.cache-hit != 'true' }}        
-        name: Install Rust
+#Install rust +fmt
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
           components: rustfmt
-
-      - if: ${{ steps.cache-rust-quality.outputs.cache-hit != 'true' }}        
-        name: Set Rust default toolchain
-        run: rustup default stable
 
       - name: Cargo check
         run: make check
