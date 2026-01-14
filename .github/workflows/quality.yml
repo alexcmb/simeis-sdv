@@ -46,7 +46,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .venv
-          key: python-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
+          key: python-${{ runner.os }}-${{ hashFiles('**/*.py') }}
 
       - name: Setup Python venv
         run: python -m venv .venv
