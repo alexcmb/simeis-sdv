@@ -26,6 +26,7 @@ jobs:
           path: |
               ~/.cargo/registry
               ~/.cargo/git
+              ~/.cargo/bin
               target
           key: rust-quality-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
