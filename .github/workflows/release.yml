@@ -16,14 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache Gradle packages
+      - name: Cache cargo packages
         id: cache-cargo
         uses: actions/cache@v4
         with:
           path: |
               ~/.cargo/registry
               ~/.cargo/bin
-          keys: cargo-typst-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-typst-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
       - if: ${{ steps.cache-cargo.outputs.cache-hit != 'true' }}        
         name: Install typst
