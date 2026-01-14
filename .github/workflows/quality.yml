@@ -1,0 +1,34 @@
+name: quality-check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+#Install rust +fmt
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - name: Cargo check
+        run: make check
+
+      - name: Install Python tools
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install black
+
+      - name: Check Python formatting
+        run: make python-check

@@ -13,6 +13,12 @@ documentation:
 	typst compile doc/manual.typ
 check:
 	cargo check
+	cargo fmt --check
+	cargo clippy
+
+python-check:
+	@echo "Vérification du formatage avec black..."
+	@black --check . || (echo "Formatage incorrect, correction en cours..." && black .)
 unit_tests:
 	cargo test
 clean:
@@ -20,6 +26,6 @@ clean:
 
 # all: release install
 
-#Make help
+#Make helps
 help:
 	@echo "make debug=1 pour debug ou make sans options pour release"
