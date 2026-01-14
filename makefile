@@ -13,6 +13,13 @@ documentation:
 	typst compile doc/manual.typ
 check:
 	cargo check
+	cargo fmt --check
+	cargo clippy -- -D warnings
+
+.PHONY: python-check
+python-check:
+	black --check 
+
 unit_tests:
 	cargo test
 clean:
