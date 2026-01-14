@@ -18,7 +18,7 @@ check:
 
 .PHONY: python-check
 python-check:
-	black --check 
+	black --check .
 
 unit_tests:
 	cargo test

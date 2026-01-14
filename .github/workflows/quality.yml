@@ -19,6 +19,7 @@ jobs:
         with:
           toolchain: stable
           override: true
+          components: rustfmt
 
       - name: Cargo check
         run: make check
