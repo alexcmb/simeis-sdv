@@ -1,0 +1,23 @@
+jobs:
+  propagate:
+    if: >
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'bug/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Propagate changes
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "Test"
+          body: |
+            test22
+          branch: feature/Nazim
+          base: main
+          labels: propagated
