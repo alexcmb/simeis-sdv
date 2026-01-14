@@ -31,8 +31,8 @@ jobs:
           key: rust-quality-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
 #Install rust +fmt+ caching
-      - if: ${{ steps.cache-rust-quality.outputs.cache-hit != 'true' }}        
-        name: Install Rust
+      # - if: ${{ steps.cache-rust-quality.outputs.cache-hit != 'true' }}        
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
