@@ -1,0 +1,32 @@
+#WILLIAM
+name: WILLIAM_Release
+on:
+  pull_request:
+    branches:
+      - 'main'
+jobs:
+  release:
+    name: cargo build
+    runs-on: ubuntu-latest
+    container:
+      image: rust:trixie
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt update
+          apt install -y curl xz-utils
+
+      - name: Install typst
+        run: cargo install typst-cli
+
+      - name: build cargo make
+        run: make release 
+      
+      - name: make documentation 
+        run: make documentation
+      
+      - name: make clean
+        run: make clean
+  

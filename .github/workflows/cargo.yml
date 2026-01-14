@@ -1,0 +1,26 @@
+#WILLIAM
+name: WILLIAM_test 
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    name: cargo test
+    runs-on: ubuntu-latest
+    container:
+      image: rust:trixie
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install make
+        run: apt update && apt install build-essential -y
+      # - name: Install Rust
+      #   uses: dtolnay/rust-toolchain@stable
+      - name: make check
+        run: make check
+
+      - name: make test
+        run: make unit_tests
+
+      - name: make clean
+        run: make clean
