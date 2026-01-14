@@ -20,11 +20,21 @@ jobs:
 
       - name: Install typst
         run: |
+          set -e
+
           apt update
-          apt install -y curl tar
-          curl -L https://github.com/typst/typst/releases/download/v0.11.1/typst-x86_64-unknown-linux-gnu.tar.xz \
-            | tar -xJ
+          apt install -y curl xz-utils file
+
+          curl -fL \
+            https://github.com/typst/typst/releases/download/v0.11.1/typst-x86_64-unknown-linux-gnu.tar.xz \
+            -o typst.tar.xz
+
+          file typst.tar.xz
+
+          tar -xJf typst.tar.xz
           mv typst-x86_64-unknown-linux-gnu/typst /usr/local/bin/typst
+
+          typst --version
 
       - name: build cargo make
         run: make release 
