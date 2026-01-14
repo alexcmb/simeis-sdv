@@ -1,36 +1,21 @@
+#William
 name: Enforce release branch policy
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened]
 
 jobs:
   check-release-policy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check branch policy
-        id: policy
-        run: |
-          BASE="${{ github.event.pull_request.base.ref }}"
-          HEAD="${{ github.event.pull_request.head.ref }}"
-
-          echo "Base branch: $BASE"
-          echo "Head branch: $HEAD"
-
-          if [[ "$BASE" == release/* ]]; then
-            if [[ "$HEAD" != "main" && "$HEAD" != bug/* ]]; then
-              echo "violation=true" >> $GITHUB_OUTPUT
-            else
-              echo "violation=false" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "violation=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Close pull request if policy violated
-        if: steps.policy.outputs.violation == 'true'
+        if: >
+          ${{
+            startsWith(github.event.pull_request.base.ref, 'release/')
+            && github.event.pull_request.head.ref != 'main'
+            && !startsWith(github.event.pull_request.head.ref, 'bug/')
+          }}
         uses: superbrothers/close-pull-request@v3
         with:
-      # Optional. Post a issue comment just before closing a pull request.
-          comment: "We do not accept PRs. If you have any questions, please feel free to contact us."
+          comment: "You cannot merge on release from other branches than main or bug/*"
