@@ -41,9 +41,9 @@ jobs:
           override: true
           components: rustfmt
 
-      # - if: ${{ steps.cache-rust-quality.outputs.cache-hit != 'true' }}        
-      #   name: Set Rust default toolchain
-      #   run: rustup default stable
+      - if: ${{ steps.cache-rust-quality.outputs.cache-hit != 'true' }}        
+        name: Set Rust default toolchain
+        run: rustup default stable
 
       - name: Cargo check
         run: make check
