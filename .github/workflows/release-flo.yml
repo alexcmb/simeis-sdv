@@ -8,6 +8,10 @@ on:
   push:
     branches:
       - 'release/**'
+  workflow_run:
+    workflows: ["Release cargo"]
+    types:
+      - completed
 
 permissions:
   contents: write
