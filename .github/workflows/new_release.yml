@@ -57,11 +57,11 @@ jobs:
         run: make release
 
       # Structure attendue par dpkg-deb :
-      #   PKG/DEBIAN/          -> control, postinst, prerm
-      #   PKG/usr/bin/         -> le binaire
-      #   PKG/usr/share/man/   -> page de manuel compressée
-      #   PKG/usr/share/doc/   -> copyright, changelogs compressés
-      #   PKG/etc/systemd/     -> le fichier de service
+      #   PKG/DEBIAN/              -> control, conffiles, postinst, prerm
+      #   PKG/usr/bin/             -> le binaire
+      #   PKG/usr/share/man/       -> page de manuel compressée
+      #   PKG/usr/share/doc/       -> copyright, changelogs compressés
+      #   PKG/lib/systemd/system/  -> le fichier de service (pas /etc !)
       #
       # Le chmod 755 sur les répertoires est obligatoire selon la Debian Policy.
       - name: Créer l'arborescence du paquet Debian
@@ -71,7 +71,7 @@ jobs:
           mkdir -p "${PKG}/usr/bin"
           mkdir -p "${PKG}/usr/share/man/man1"
           mkdir -p "${PKG}/usr/share/doc/simeis"
-          mkdir -p "${PKG}/etc/systemd/system"
+          mkdir -p "${PKG}/lib/systemd/system"
           find "${PKG}" -type d | xargs chmod 755
 
       - name: Copier le binaire compilé
@@ -83,6 +83,9 @@ jobs:
 
       # La dépendance à cmatrix n'est pas fonctionnelle, c'est juste pour
       # pratiquer le champ Depends (point 5 du TP).
+      # libc6 est nécessaire car le binaire Rust est lié dynamiquement à la libc.
+      # La section "utils" est requise (lintian rejette "base").
+      # La description ne doit pas commencer par le nom du paquet.
       - name: Générer DEBIAN/control
         run: |
           VERSION="${{ steps.version.outputs.version }}"
@@ -90,14 +93,24 @@ jobs:
           cat > "${PKG}/DEBIAN/control" <<EOF
           Package: simeis
           Version: ${VERSION}-1
-          Section: base
+          Section: utils
           Priority: optional
           Architecture: amd64
-          Depends: cmatrix
+          Depends: libc6, cmatrix
           Maintainer: Votre Nom <votre@email.com>
-          Description: Simeis - serveur de démonstration CI/CD
-           Paquet généré automatiquement par la CI GitHub Actions.
+          Description: Serveur de demonstration CI/CD
+           Paquet genere automatiquement par la CI GitHub Actions.
           EOF
+
+      # Tout fichier sous /etc doit être déclaré comme conffile.
+      # On utilise lib/systemd/system/ à la place, donc ce fichier est vide ici,
+      # mais on le garde pour être explicite.
+      - name: Générer DEBIAN/conffiles
+        run: |
+          PKG="${{ steps.version.outputs.pkg }}"
+          # Le service est dans lib/systemd/system/, pas dans /etc,
+          # donc il n'y a pas de conffiles à déclarer.
+          touch "${PKG}/DEBIAN/conffiles"
 
       # Exécuté après l'installation du paquet.
       # Crée l'utilisateur système "simeis" s'il n'existe pas, puis démarre le service.
@@ -139,8 +152,9 @@ jobs:
           EOF
           chmod 755 "${PKG}/DEBIAN/prerm"
 
-      # La page de manuel doit être compressée avec gzip --best,
-      # sinon lintian remonte une erreur "manpage-not-compressed".
+      # La page de manuel doit être compressée avec gzip --best -n,
+      # -n supprime le timestamp pour éviter l'erreur lintian
+      # "package-contains-timestamped-gzip".
       - name: Générer la page de manuel simeis-server.1
         run: |
           VERSION="${{ steps.version.outputs.version }}"
@@ -151,15 +165,15 @@ jobs:
           .\" Contacter votre@email.com pour corriger les erreurs ou typos.
           .TH SIMEIS-SERVER 1 "${DATE}" "Simeis ${VERSION}" "User Commands"
           .SH NAME
-          simeis-server \- serveur de démonstration CI/CD
+          simeis-server \- serveur de demonstration CI/CD
           .SH SYNOPSIS
           .B simeis-server
           [\fIOPTIONS\fR]
           .SH DESCRIPTION
           .B simeis-server
-          est le serveur de l'application Simeis, développée dans le cadre
-          du cours CI/CD (Litchi Pi 2026). Compilé en Rust, il tourne comme
-          service systemd sous l'utilisateur non-privilégié
+          est le serveur de l'application Simeis, developpee dans le cadre
+          du cours CI/CD (Litchi Pi 2026). Compile en Rust, il tourne comme
+          service systemd sous l'utilisateur non-privilegie
           .IR simeis .
           .SH OPTIONS
           .TP
@@ -169,7 +183,7 @@ jobs:
           .B \-v, \-\-version
           Affiche la version et quitte.
           .SH FILES
-          .I /etc/systemd/system/simeis.service
+          .I /lib/systemd/system/simeis.service
           Fichier de service systemd.
           .SH SEE ALSO
           .BR systemctl (1),
@@ -180,16 +194,18 @@ jobs:
           .SH AUTHOR
           Votre Nom (votre@email.com)
           .SH COPYRIGHT
-          Distribué sous licence CC BY-NC \- Litchi Pi 2026
+          Distribue sous licence CC BY-NC \- Litchi Pi 2026
           EOF
-          gzip --best -c /tmp/simeis-server.1 \
+          gzip --best -n -c /tmp/simeis-server.1 \
             > "${PKG}/usr/share/man/man1/simeis-server.1.gz"
 
+      # Le service va dans lib/systemd/system/ et non etc/systemd/system/,
+      # sinon lintian remonte "systemd-service-in-odd-location".
       - name: Générer simeis.service
         run: |
           PKG="${{ steps.version.outputs.pkg }}"
           BIN="${{ steps.version.outputs.binary }}"
-          cat > "${PKG}/etc/systemd/system/simeis.service" <<EOF
+          cat > "${PKG}/lib/systemd/system/simeis.service" <<EOF
           [Unit]
           Description=Simeis CI/CD demo server
           After=network.target
@@ -207,37 +223,59 @@ jobs:
 
       # Les trois fichiers de doc sont obligatoires pour passer lintian :
       # copyright, changelog.gz et changelog.Debian.gz.
-      # Tous doivent être compressés avec gzip --best.
+      # -n sur gzip supprime le timestamp embarqué dans le fichier compressé.
+      # Le copyright doit contenir une ligne "Copyright (C)" explicite.
+      # Le changelog.Debian doit respecter le format Debian strict.
       - name: Générer les fichiers de documentation
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           PKG="${{ steps.version.outputs.pkg }}"
           DATE=$(date +'%Y-%m-%d')
+          RFC_DATE=$(date -R)
 
+          # La ligne "Copyright (C)" est obligatoire pour éviter
+          # l'avertissement "copyright-without-copyright-notice".
           cat > "${PKG}/usr/share/doc/simeis/copyright" <<EOF
-          simeis
+          Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+          Upstream-Name: simeis
+          Upstream-Contact: Votre Nom <votre@email.com>
 
-          Copyright: Votre Nom <votre@email.com>
-          ${DATE}
-
-          Distribué sous les termes de la GNU General Public License (GPL).
-          Voir /usr/share/common-licenses/GPL
+          Files: *
+          Copyright (C) ${DATE} Votre Nom <votre@email.com>
+          License: GPL-3+
+           This program is free software: you can redistribute it and/or modify
+           it under the terms of the GNU General Public License as published by
+           the Free Software Foundation, either version 3 of the License, or
+           (at your option) any later version.
+           .
+           On Debian systems, the full text of the GNU General Public License
+           version 3 can be found in /usr/share/common-licenses/GPL-3.
           EOF
 
+          # Le format du changelog Debian est très strict :
+          # première ligne : "paquet (version) distribution; urgency=low"
+          # entrées indentées de deux espaces avec "  * "
+          # ligne de clôture commençant par " -- " avec la date RFC 2822
           cat > /tmp/changelog <<EOF
-          simeis (${VERSION}-1)
+          simeis (${VERSION}-1) unstable; urgency=low
 
-            * Release ${VERSION} générée automatiquement par la CI.
+            * Release ${VERSION} generee automatiquement par la CI.
 
-           -- Votre Nom <votre@email.com>  ${DATE}
+           -- Votre Nom <votre@email.com>  ${RFC_DATE}
           EOF
-          gzip --best -c /tmp/changelog > "${PKG}/usr/share/doc/simeis/changelog.gz"
+          gzip --best -n -c /tmp/changelog \
+            > "${PKG}/usr/share/doc/simeis/changelog.gz"
 
+          # Le changelog.Debian doit aussi respecter le format Debian.
           cat > /tmp/changelog.Debian <<EOF
-          simeis Debian maintainer and upstream author are identical.
-          Therefore see also normal changelog file for Debian changes.
+          simeis (${VERSION}-1) unstable; urgency=low
+
+            * Maintainer and upstream author are identical.
+              See changelog for full history.
+
+           -- Votre Nom <votre@email.com>  ${RFC_DATE}
           EOF
-          gzip --best -c /tmp/changelog.Debian \
+          gzip --best -n -c /tmp/changelog.Debian \
             > "${PKG}/usr/share/doc/simeis/changelog.Debian.gz"
 
       - name: Construire le paquet .deb
