@@ -61,7 +61,7 @@ jobs:
       #   PKG/usr/bin/             -> le binaire
       #   PKG/usr/share/man/       -> page de manuel compressée
       #   PKG/usr/share/doc/       -> copyright, changelogs compressés
-      #   PKG/lib/systemd/system/  -> le fichier de service (pas /etc !)
+      #   PKG/etc/systemd/system/  -> le fichier de service
       #
       # Le chmod 755 sur les répertoires est obligatoire selon la Debian Policy.
       - name: Créer l'arborescence du paquet Debian
@@ -103,7 +103,6 @@ jobs:
           EOF
 
       # Tout fichier sous /etc doit être déclaré comme conffile.
-      # On utilise lib/systemd/system/ à la place, donc ce fichier est vide ici,
       # mais on le garde pour être explicite.
       # Tout fichier dans /etc doit être listé dans conffiles pour que dpkg
       # sache qu'il ne doit pas l'écraser lors d'une mise à jour.
@@ -199,7 +198,6 @@ jobs:
           gzip --best -n -c /tmp/simeis-server.1 \
             > "${PKG}/usr/share/man/man1/simeis-server.1.gz"
 
-      # Le service va dans lib/systemd/system/ et non etc/systemd/system/,
       # sinon lintian remonte "systemd-service-in-odd-location".
       - name: Générer simeis.service
         run: |
