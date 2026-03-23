@@ -331,7 +331,11 @@ jobs:
           cat release_changelog.md >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-      - name: generate documentation
+      - if: ${{ steps.cache-cargo.outputs.cache-hit != 'true' }}        
+        name: Install typst
+        run: cargo install typst-cli
+
+      - name: genere la documentation
         run: make documentation
 
       # On utilise l'image prebuilt sur ghcr.io pour éviter le build du
