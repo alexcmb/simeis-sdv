@@ -5,6 +5,10 @@ on:
     branches:
       - 'release/**'
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   build:
     name: Build project
@@ -40,16 +44,17 @@ jobs:
       - name: Debug files
         run: |
           echo "=== TARGET ==="
-          ls -R target || true
+          ls -R target/release/ || true
           echo "=== DOCS ==="
-          ls -R docs || true
+          ls -R doc/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
-            target/release/*
+            target/release/simeis-server
+            doc/manual.pdf
 
   release:
     name: Create Release
@@ -65,7 +70,7 @@ jobs:
 
       - name: Extract branch
         id: vars
-        run: echo "branch=${GITHUB_BASE_REF}" >> $GITHUB_OUTPUT
+        run: echo "branch=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
 
       - name: Get last release
         id: last_release
@@ -94,7 +99,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: "closed",
-              base: "${{ github.base_ref }}",
+              base: "${{ steps.vars.outputs.branch }}",
               per_page: 100
             });
 
@@ -118,7 +123,6 @@ jobs:
 
             for (const pr of prs) {
               const line = "- [" + pr.title + "](" + pr.html_url + ")";
-
               if (pr.head.ref.startsWith("feature/")) {
                 features.push(line);
               } else if (pr.head.ref.startsWith("bug/")) {
@@ -129,9 +133,9 @@ jobs:
             }
 
             const body =
-              "##  Features\n" + (features.join("\n") || "Aucune") + "\n\n" +
-              "##  Bugfixes\n" + (bugfixes.join("\n") || "Aucun") + "\n\n" +
-              "##  Autres\n" + (others.join("\n") || "Aucun");
+              "## 🚀 Features\n" + (features.join("\n") || "Aucune") + "\n\n" +
+              "## 🐛 Bugfixes\n" + (bugfixes.join("\n") || "Aucun") + "\n\n" +
+              "## 🔧 Autres\n" + (others.join("\n") || "Aucun");
 
             core.setOutput("body", body);
 
@@ -141,6 +145,6 @@ jobs:
           tag_name: ${{ steps.vars.outputs.branch }}
           name: Release ${{ steps.vars.outputs.branch }}
           body: ${{ steps.changelog.outputs.body }}
-          files: artifacts/*
+          files: artifacts/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
