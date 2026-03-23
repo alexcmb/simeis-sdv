@@ -1,12 +1,15 @@
 #WILLIAM.
 name: Release cargo
 on:
+  push:
+    branches:
+      - 'main'
   pull_request:
     branches:
       - 'main'
 
 jobs:
-  release:
+  build:
     name: cargo build
     runs-on: ubuntu-latest
     container:
@@ -33,5 +36,55 @@ jobs:
       - name: make documentation 
         run: make documentation
       
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            target/release/simeis-server
+            doc/manual.pdf
+      
       - name: make clean
         run: make clean
+
+  publish_release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: build-artifacts
+
+      - name: Put commit hash/name in env variables
+        run: |
+          echo "GIT_HASH=$(git rev-parse --short=8 HEAD)" >> $GITHUB_ENV
+          echo "GIT_MESSAGE<<EOF" >> $GITHUB_ENV
+          git log -1 --pretty=%B >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Release the new binaries
+        uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: "latest"
+          prerelease: true
+          name: "Latest Commit, that compiles"
+          body: |
+            This automatic prerelease is built from commit ${{ env.GIT_HASH }} and was triggered by @${{ github.actor }}
+            [Github Actions workflow run that built this prerelease](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            Commit message:
+            ${{ env.GIT_MESSAGE }}
+          files: |
+            build-artifacts/**/*
+          clear_attachments: true
