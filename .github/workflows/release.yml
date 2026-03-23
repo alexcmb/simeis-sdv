@@ -34,6 +34,58 @@ jobs:
       - name: make documentation 
         run: make documentation
       
+      - name: Install Debian packaging tools
+        run: apt-get update && apt-get install -y fakeroot lintian
+
+      - name: Build Debian package
+        run: |
+          PACKAGE_NAME="simeis-server"
+          VERSION="1.0.0"
+          if [[ "${GITHUB_BASE_REF}" == release/* ]]; then
+            VERSION=${GITHUB_BASE_REF#release/}
+            VERSION=${VERSION#v}
+          fi
+          
+          mkdir -p debian/usr/bin
+          mkdir -p debian/usr/share/man/man1
+          mkdir -p debian/DEBIAN
+          mkdir -p debian/usr/share/doc/$PACKAGE_NAME
+          
+          find debian -type d -exec chmod 0755 {} \;
+          
+          cat <<EOF > debian/DEBIAN/control
+          Package: $PACKAGE_NAME
+          Version: $VERSION
+          Section: web
+          Priority: optional
+          Architecture: amd64
+          Maintainer: CI <ci@example.com>
+          Description: Simeis Server application
+          EOF
+          
+          cp target/release/simeis-server debian/usr/bin/
+          
+          echo ".TH SIMEIS-SERVER 1" > man-page.1
+          echo ".SH NAME" >> man-page.1
+          echo "simeis-server \- Simeis Server binary" >> man-page.1
+          cp man-page.1 debian/usr/share/man/man1/simeis-server.1
+          
+          echo "Copyright (C) 2026" > debian/usr/share/doc/$PACKAGE_NAME/copyright
+          echo "Initial release" > debian/usr/share/doc/$PACKAGE_NAME/changelog
+          cp debian/usr/share/doc/$PACKAGE_NAME/changelog debian/usr/share/doc/$PACKAGE_NAME/changelog.Debian
+          
+          gzip --best -n debian/usr/share/man/man1/simeis-server.1
+          gzip --best -n debian/usr/share/doc/$PACKAGE_NAME/copyright
+          gzip --best -n debian/usr/share/doc/$PACKAGE_NAME/changelog
+          gzip --best -n debian/usr/share/doc/$PACKAGE_NAME/changelog.Debian
+          
+          fakeroot dpkg-deb --build debian
+          
+          DEB_FILE="${PACKAGE_NAME}_${VERSION}_amd64.deb"
+          mv debian.deb $DEB_FILE
+          
+          lintian $DEB_FILE || echo "Lintian warnings ignored"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -41,6 +93,7 @@ jobs:
           path: |
             target/release/simeis-server
             doc/manual.pdf
+            *.deb
       
       - name: make clean
         run: make clean
@@ -119,6 +172,7 @@ jobs:
           files: |
             build-artifacts/**/simeis-server
             build-artifacts/**/*.pdf
+            build-artifacts/**/*.deb
           clear_attachments: true
 
 
