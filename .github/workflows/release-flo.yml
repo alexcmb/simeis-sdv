@@ -2,18 +2,16 @@ name: Auto Release
 
 on:
   pull_request:
-    types: [closed]
     branches:
       - 'release/**'
 
-permissions:
-  contents: write
-  pull-requests: read
-  actions: read
+on:
+  push_request:
+    branches:
+      - 'release/**'
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
