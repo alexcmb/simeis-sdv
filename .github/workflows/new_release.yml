@@ -38,10 +38,8 @@ jobs:
           echo "binary=simeis-server"        >> "$GITHUB_OUTPUT"
 
       # fakeroot permet de builder le .deb avec les bons propriétaires root/root
-      # sans avoir les droits root sur le runner. Sans ça, lintian remonte
-      # une erreur "bad-owner-for-doc-file".
       - name: Installer fakeroot et lintian
-        run: sudo apt-get install -y fakeroot lintian
+        run: sudo apt-get install -y fakeroot
 
       # rustup est déjà présent sur les runners GitHub, on s'assure juste
       # d'être sur stable avant de lancer le build.
