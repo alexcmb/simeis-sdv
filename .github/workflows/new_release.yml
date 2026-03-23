@@ -95,7 +95,7 @@ jobs:
           Version: ${VERSION}-1
           Section: utils
           Priority: optional
-          Architecture: amd64
+          Architecture: x86_64
           Depends: libc6, cmatrix
           Maintainer: Votre Nom <votre@email.com>
           Description: Serveur de demonstration CI/CD
