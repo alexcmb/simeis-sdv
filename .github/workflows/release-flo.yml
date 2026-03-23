@@ -1,6 +1,5 @@
 name: Auto Release
 
-
 on:
   pull_request:
     branches:
@@ -8,6 +7,10 @@ on:
   push:
     branches:
       - 'release/**'
+  workflow_run:
+    workflows: ["Release cargo"]
+    types:
+      - completed
 
 permissions:
   contents: write
