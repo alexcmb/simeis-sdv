@@ -96,7 +96,6 @@ ${bugfixes.join("\n") || "Aucun"}
 ${others.join("\n") || "Aucun"}
 `);
 
-      # 🚀 Release
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
