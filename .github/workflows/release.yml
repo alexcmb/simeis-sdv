@@ -65,10 +65,7 @@ jobs:
           
           cp target/release/simeis-server debian/usr/bin/
           
-          echo ".TH SIMEIS-SERVER 1" > man-page.1
-          echo ".SH NAME" >> man-page.1
-          echo "simeis-server \- Simeis Server binary" >> man-page.1
-          cp man-page.1 debian/usr/share/man/man1/simeis-server.1
+          cp doc/simeis-server.1 debian/usr/share/man/man1/
           
           echo "Copyright (C) 2026" > debian/usr/share/doc/$PACKAGE_NAME/copyright
           echo "Initial release" > debian/usr/share/doc/$PACKAGE_NAME/changelog
