@@ -1,37 +1,97 @@
-#WILLIAM.
-name: Release cargo
+# William
+name: Release
+
 on:
   pull_request:
+    types: [closed]
     branches:
-      - 'main'
+      - 'release/**'
 
 jobs:
   release:
-    name: cargo build
+    name: Build and release
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     container:
       image: rust:trixie
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache cargo packages
+      # Extraire la version depuis le nom de branche (release/nazim → nazim)
+      - name: Get version
+        id: version
+        run: |
+          BRANCH="${{ github.event.pull_request.base.ref }}"
+          echo "version=${BRANCH#release/}" >> $GITHUB_OUTPUT
+
+      - name: Cache cargo
         id: cache-cargo
         uses: actions/cache@v4
         with:
           path: |
-              /usr/local/cargo/registry
-              /usr/local/cargo/bin
-          key: cargo-typst-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+            /usr/local/cargo/registry
+            /usr/local/cargo/bin
+            target/
+          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - if: ${{ steps.cache-cargo.outputs.cache-hit != 'true' }}        
-        name: Install typst
+      - name: Install typst
+        if: steps.cache-cargo.outputs.cache-hit != 'true'
         run: cargo install typst-cli
 
-      - name: build cargo make
-        run: make release 
-      
-      - name: make documentation 
+      - name: Build binary
+        run: make release
+
+      - name: Build documentation
         run: make documentation
-      
-      - name: make clean
-        run: make clean
+
+      # Générer le changelog
+      - name: Generate changelog
+        id: changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          apt-get update && apt-get install -y gh jq
+
+          BRANCH="release/${{ steps.version.outputs.version }}"
+          FEATURES=""
+          BUGS=""
+          OTHER=""
+
+          gh pr list --base "$BRANCH" --state merged \
+            --json title,url,headRefName > /tmp/prs.json
+
+          for pr in $(jq -r 'keys[]' /tmp/prs.json); do
+            TITLE=$(jq -r ".[$pr].title" /tmp/prs.json)
+            URL=$(jq -r ".[$pr].url" /tmp/prs.json)
+            HEAD=$(jq -r ".[$pr].headRefName" /tmp/prs.json)
+            LINE="- [$TITLE]($URL)"
+
+            case "$HEAD" in
+              feature/*) FEATURES="$FEATURES\n$LINE" ;;
+              bug/*)     BUGS="$BUGS\n$LINE" ;;
+              *)         OTHER="$OTHER\n$LINE" ;;
+            esac
+          done
+
+          {
+            echo "notes<<EOF"
+            echo "## Changelog"
+            [ -n "$FEATURES" ] && echo -e "\n### Features\n$FEATURES"
+            [ -n "$BUGS" ]     && echo -e "\n### Bugfix\n$BUGS"
+            [ -n "$OTHER" ]    && echo -e "\n### Autre\n$OTHER"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      # Créer la release et uploader les artefacts
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --notes "${{ steps.changelog.outputs.notes }}" \
+            ./target/release/simeis-server \
+            ./docs/manual.pdf
