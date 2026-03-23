@@ -61,7 +61,7 @@ jobs:
       #   PKG/usr/bin/             -> le binaire
       #   PKG/usr/share/man/       -> page de manuel compressée
       #   PKG/usr/share/doc/       -> copyright, changelogs compressés
-      #   PKG/lib/systemd/system/  -> le fichier de service (pas /etc !)
+      #   PKG/etc/systemd/system/  -> le fichier de service (pas /etc !)
       #
       # Le chmod 755 sur les répertoires est obligatoire selon la Debian Policy.
       - name: Créer l'arborescence du paquet Debian
@@ -71,7 +71,7 @@ jobs:
           mkdir -p "${PKG}/usr/bin"
           mkdir -p "${PKG}/usr/share/man/man1"
           mkdir -p "${PKG}/usr/share/doc/simeis"
-          mkdir -p "${PKG}/lib/systemd/system"
+          mkdir -p "${PKG}/etc/systemd/system"
           find "${PKG}" -type d | xargs chmod 755
 
       - name: Copier le binaire compilé
