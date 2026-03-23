@@ -67,7 +67,7 @@ jobs:
         uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.base_ref }}
+          tag: v-${{ github.base_ref }}
           prerelease: false
           name: "Release ${{ github.base_ref }}"
           body: "Release generated automatically upon merging to ${{ github.base_ref }}"
