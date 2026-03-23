@@ -63,11 +63,19 @@ jobs:
           name: build-artifacts
           path: build-artifacts
 
+      - name: Explicitly push Git Tag to avoid branch collision
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -f ${{ github.base_ref }}
+          git push -f origin refs/tags/${{ github.base_ref }}
+
       - name: Release the new binaries
         uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.base_ref }}
+          skip_tag_creation: true
           prerelease: false
           name: "Release ${{ github.base_ref }}"
           body: "Release generated automatically upon merging to ${{ github.base_ref }}"
