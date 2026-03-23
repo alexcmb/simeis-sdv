@@ -1,8 +1,13 @@
 name: Auto Release
 
+
 on:
   pull_request:
-    types: [closed]
+    branches:
+      - 'release/**'
+
+on:
+  push_request:
     branches:
       - 'release/**'
 
