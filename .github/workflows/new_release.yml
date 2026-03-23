@@ -344,10 +344,6 @@ jobs:
         name: Install typst
         run: cargo install typst-cli
 
-      - if: ${{ steps.cache-cargo.outputs.cache-hit != 'true' }}        
-        name: Install typst
-        run: cargo install typst-cli
-
       - name: genere la documentation
         run: make documentation
 
@@ -363,6 +359,6 @@ jobs:
           body: ${{ steps.read_changelog.outputs.content }}
           files: |
             ${{ steps.version.outputs.pkg }}.deb
-            doc/manuel.pdf
+            doc/manual.pdf
           clear_attachments: true
           prerelease: false
