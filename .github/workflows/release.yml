@@ -35,3 +35,11 @@ jobs:
       
       - name: make clean
         run: make clean
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            target/release/**
+            docs/**
