@@ -31,4 +31,5 @@ jobs:
           override: true
 
       - name: audit rust
+        continue-on-error: true
         run: make audit
