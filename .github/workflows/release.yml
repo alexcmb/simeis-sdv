@@ -17,6 +17,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Extraire la version depuis le nom de branche (release/nazim → nazim)
       - name: Get version

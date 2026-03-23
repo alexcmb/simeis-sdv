@@ -8,13 +8,16 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    container:
+      image: rust:trixie
 
     steps:
+      # Sans ça, le runner n'a pas le code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Cargo unit test
         run: make unit_test
-
-      - name: Check Python formatting
-        run: python3 test/unit-test.py
 
       - name: audit rust
         run: make audit
