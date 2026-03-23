@@ -24,9 +24,8 @@ unit_test:
 	cargo test --features heavy-testing 
 # Ajout features heavy-testing
 audit:
-	cargo install cargo-audit cargo-udeps
+	cargo install cargo-audit
 	cargo audit
-	cargo udeps
 
 clean:
 	cargo clean
