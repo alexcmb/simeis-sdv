@@ -45,13 +45,14 @@ jobs:
       - name: Build documentation
         run: make documentation
 
-      # Générer le changelog
       - name: Generate changelog
         id: changelog
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           apt-get update && apt-get install -y gh jq
+
+          git config --global --add safe.directory /__w/simeis-sdv/simeis-sdv
 
           BRANCH="release/${{ steps.version.outputs.version }}"
           FEATURES=""
