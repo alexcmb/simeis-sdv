@@ -1,6 +1,5 @@
 name: Auto Release
 
-
 on:
   pull_request:
     branches:
@@ -33,6 +32,7 @@ jobs:
         if: ${{ steps.cache-cargo.outputs.cache-hit != 'true' }}
         run: cargo install typst-cli
 
+      # ✅ BUILD (corrigé : suppression du with inutile)
       - name: Build release
         run: make release
 
@@ -42,6 +42,7 @@ jobs:
       - name: Clean
         run: make clean
 
+      # 🔍 DEBUG (très important pour voir les fichiers)
       - name: Debug files
         run: |
           echo "=== TARGET ==="
@@ -49,13 +50,14 @@ jobs:
           echo "=== DOCS ==="
           ls -R docs || true
 
+      # ✅ Upload robuste
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
             target/release/*
-            doc/manual.typ
+          if-no-files-found: warn
 
   release:
     name: Create Release
@@ -64,6 +66,7 @@ jobs:
     if: github.event.pull_request.merged == true
 
     steps:
+      # 📥 Download artifacts (correct)
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -136,9 +139,9 @@ jobs:
             }
 
             const body =
-              "## Features\n" + (features.join("\n") || "Aucune") + "\n\n" +
-              "## Bugfixes\n" + (bugfixes.join("\n") || "Aucun") + "\n\n" +
-              "## Autres\n" + (others.join("\n") || "Aucun");
+              "## 🚀 Features\n" + (features.join("\n") || "Aucune") + "\n\n" +
+              "## 🐛 Bugfixes\n" + (bugfixes.join("\n") || "Aucun") + "\n\n" +
+              "## 🔧 Autres\n" + (others.join("\n") || "Aucun");
 
             core.setOutput("body", body);
 
@@ -151,4 +154,3 @@ jobs:
           files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #test
