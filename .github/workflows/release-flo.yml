@@ -41,19 +41,26 @@ jobs:
       - name: Clean
         run: make clean
 
+      - name: Debug files
+        run: |
+          echo "=== TARGET ==="
+          ls -R target || true
+          echo "=== DOCS ==="
+          ls -R docs || true
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
-            target/release/**
-            docs/**
+            target/release/*
+            doc/manual.typ
 
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: build  
-    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    needs: build
+    if: github.event.pull_request.merged == true
 
     steps:
       - name: Download artifacts
@@ -64,12 +71,7 @@ jobs:
 
       - name: Extract branch
         id: vars
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "branch=${GITHUB_BASE_REF}" >> $GITHUB_OUTPUT
-          else
-            echo "branch=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
-          fi
+        run: echo "branch=${GITHUB_BASE_REF}" >> $GITHUB_OUTPUT
 
       - name: Get last release
         id: last_release
@@ -98,7 +100,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: "closed",
-              base: "${{ steps.vars.outputs.branch }}",
+              base: "${{ github.base_ref }}",
               per_page: 100
             });
 
@@ -133,9 +135,9 @@ jobs:
             }
 
             const body =
-              "## 🚀 Features\n" + (features.join("\n") || "Aucune") + "\n\n" +
-              "## 🐛 Bugfixes\n" + (bugfixes.join("\n") || "Aucun") + "\n\n" +
-              "## 🔧 Autres\n" + (others.join("\n") || "Aucun");
+              "## Features\n" + (features.join("\n") || "Aucune") + "\n\n" +
+              "## Bugfixes\n" + (bugfixes.join("\n") || "Aucun") + "\n\n" +
+              "## Autres\n" + (others.join("\n") || "Aucun");
 
             core.setOutput("body", body);
 
@@ -145,6 +147,6 @@ jobs:
           tag_name: ${{ steps.vars.outputs.branch }}
           name: Release ${{ steps.vars.outputs.branch }}
           body: ${{ steps.changelog.outputs.body }}
-          files: artifacts/**
+          files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
