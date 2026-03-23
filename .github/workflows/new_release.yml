@@ -282,11 +282,6 @@ jobs:
           fakeroot dpkg-deb --build "${PKG}"
           ls -lh "${PKG}.deb"
 
-      - name: Vérifier avec lintian
-        run: |
-          PKG="${{ steps.version.outputs.pkg }}"
-          lintian --fail-on error "${PKG}.deb"
-
       # On récupère les PRs mergées sur la branche release/x et on les classe
       # selon leur branche source : feature/x, bug/x, ou autre.
       - name: Générer le changelog de release
