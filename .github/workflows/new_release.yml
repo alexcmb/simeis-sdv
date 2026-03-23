@@ -1,5 +1,6 @@
-name: new_release
-# Déclenché quand une PR est fermée (mergée ou non) sur une branche release/x
+name: Release Artifacts
+
+# Déclenché quand une PR est fermée sur une branche release/x
 on:
   pull_request:
     types:
@@ -8,20 +9,349 @@ on:
       - 'release/**'
 
 jobs:
-  release:
+  create-release:
+    # Exécuté uniquement si la PR a été mergée 
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
+    # permissions:
+    #   contents: write      # Nécessaire pour créer/modifier la release GitHub
+    #   pull-requests: read  # Nécessaire pour lire les PRs mergées
+
     steps:
-      - name: Checkout repo
+      # Checkout du dépôt completfetch-depth: 0 pour l'historique git
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  #pour accéder à toutes les branches
+          fetch-depth: 0
 
-      - name: Extract the version from the branch name
+      # Extraction de la version depuis le nom de la branche release/x
+      - name: Extraire la version
         id: version
         run: |
+          # "release/1.2.3" → VERSION="1.2.3"
           VERSION="${{ github.event.pull_request.base.ref }}"
           VERSION="${VERSION#release/}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION"             >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION"                >> "$GITHUB_OUTPUT"
+          echo "pkg=simeis_${VERSION}_amd64"  >> "$GITHUB_OUTPUT"
+
+      # Installation des outils Debian
+      #   - fakeroot : builder le .deb avec les bons propriétaires root/root
+      #   - lintian  : vérifier la conformité à la Debian Policy
+      - name: Installer fakeroot et lintian
+        run: sudo apt-get install -y fakeroot lintian
+
+      # Build du binaire Simeis
+      #    → Adapter cette étape selon le langage du projet
+      - name: Build Simeis
+        run: |
+          # Exemple Go  : go build -o simeis ./cmd/simeis
+          # Exemple Rust: cargo build --release && cp target/release/simeis .
+          # Exemple C   : make
+          echo "TODO: adapter la commande de build ici"
+
+      # Création de l'arborescence du paquet Debian
+
+      - name: Créer l'arborescence du paquet Debian
+        run: |
+          PKG="${{ steps.version.outputs.pkg }}"
+          mkdir -p "${PKG}/DEBIAN"
+          mkdir -p "${PKG}/usr/bin"
+          mkdir -p "${PKG}/usr/share/man/man1"
+          mkdir -p "${PKG}/usr/share/doc/simeis"
+          mkdir -p "${PKG}/etc/systemd/system"
+          find "${PKG}" -type d | xargs chmod 755
+
+      # DEBIAN/control
+      #    Métadonnées du paquet. "Depends: cmatrix" est ajouté comme
+      #    demandé dans le TP (dépendance non fonctionnelle, juste pour pratiquer).
+
+      - name: Générer DEBIAN/control
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PKG="${{ steps.version.outputs.pkg }}"
+
+          cat > "${PKG}/DEBIAN/control" <<EOF
+          Package: simeis
+          Version: ${VERSION}-1
+          Section: base
+          Priority: optional
+          Architecture: amd64
+          Depends: cmatrix
+          Maintainer: Votre Nom <votre@email.com>
+          Description: Simeis - application de démonstration CI/CD
+           Paquet créé automatiquement par la CI pour le cours CI/CD.
+           Illustre la création de releases, paquets Debian et pages de manuel.
+          EOF
+
+     
+      # DEBIAN/postinst — exécuté APRÈS l'installation
+      #    - Crée l'utilisateur système "simeis" (sans home, sans shell login)
+      #    - Fixe les droits sur le binaire
+      #    - Recharge systemd et démarre le service
+
+      - name: Générer DEBIAN/postinst
+        run: |
+          PKG="${{ steps.version.outputs.pkg }}"
+
+          cat > "${PKG}/DEBIAN/postinst" <<'EOF'
+          #!/bin/sh
+          set -e
+
+          # Créer l'utilisateur système simeis s'il n'existe pas encore
+          if ! id -u simeis > /dev/null 2>&1; then
+            useradd --system --no-create-home --shell /usr/sbin/nologin simeis
+          fi
+
+          # Droits corrects sur le binaire
+          chown root:root /usr/bin/simeis
+          chmod 755       /usr/bin/simeis
+
+          # Recharger systemd, activer et démarrer le service
+          systemctl daemon-reload
+          systemctl enable simeis.service
+          systemctl start  simeis.service
+          EOF
+
+          chmod 755 "${PKG}/DEBIAN/postinst"
+
+      # DEBIAN/prerm — exécuté AVANT la désinstallation
+      #    - Arrête et désactive le service systemd proprement
+      - name: Générer DEBIAN/prerm
+        run: |
+          PKG="${{ steps.version.outputs.pkg }}"
+
+          cat > "${PKG}/DEBIAN/prerm" <<'EOF'
+          #!/bin/sh
+          set -e
+
+          # Arrêter et désactiver le service avant suppression du paquet
+          if [ "$1" = "remove" ] || [ "$1" = "upgrade" ]; then
+            systemctl stop    simeis.service || true
+            systemctl disable simeis.service || true
+          fi
+          EOF
+
+          chmod 755 "${PKG}/DEBIAN/prerm"
+
+      # Page de manuel simeis.1
+      #    Format groff (an.tmac), section 1 (commandes utilisateur).
+      #    Compressée avec gzip --best : OBLIGATOIRE selon lintian.
+      - name: Générer la page de manuel simeis.1
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PKG="${{ steps.version.outputs.pkg }}"
+          DATE=$(date +'%B %Y')
+
+          cat > /tmp/simeis.1 <<EOF
+          .\" Page de manuel pour simeis.
+          .\" Contacter votre@email.com pour corriger les erreurs ou typos.
+          .TH SIMEIS 1 "${DATE}" "Simeis ${VERSION}" "User Commands"
+          .SH NAME
+          simeis \- application de démonstration CI/CD
+          .SH SYNOPSIS
+          .B simeis
+          [\fIOPTIONS\fR]
+          .SH DESCRIPTION
+          .B simeis
+          est une application développée dans le cadre du cours CI/CD (Litchi Pi 2026).
+          Elle illustre la création automatique de releases GitHub, de paquets Debian
+          et de pages de manuel via GitHub Actions.
+          .SH OPTIONS
+          .TP
+          .B \-h, \-\-help
+          Affiche l'aide et quitte.
+          .TP
+          .B \-v, \-\-version
+          Affiche la version du programme et quitte.
+          .SH EXAMPLES
+          .TP
+          Lancer simeis :
+          .B simeis
+          .TP
+          Afficher la version :
+          .B simeis --version
+          .SH FILES
+          .I /etc/systemd/system/simeis.service
+          Fichier de service systemd.
+          .SH SEE ALSO
+          .BR systemctl (1),
+          .BR cmatrix (1),
+          .BR useradd (8)
+          .SH BUGS
+          Aucun bug connu pour le moment.
+          .SH AUTHOR
+          Votre Nom (votre@email.com)
+          .SH COPYRIGHT
+          Distribué sous licence CC BY-NC \- Litchi Pi 2026
+          EOF
+
+          # Compression obligatoire (lintian signale une erreur sans ça)
+          gzip --best -c /tmp/simeis.1 > "${PKG}/usr/share/man/man1/simeis.1.gz"
+
+      # Fichier de service systemd
+      #     Installé dans /etc/systemd/system/ (géré par postinst/prerm).
+      #     Le service s'exécute sous l'utilisateur non-privilégié "simeis".
+      - name: Générer simeis.service (systemd)
+        run: |
+          PKG="${{ steps.version.outputs.pkg }}"
+
+          cat > "${PKG}/etc/systemd/system/simeis.service" <<'EOF'
+          [Unit]
+          Description=Simeis CI/CD demo service
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=simeis
+          ExecStart=/usr/bin/simeis
+          Restart=on-failure
+          RestartSec=5s
+
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+
+      
+      # Copie du binaire dans l'arborescence du paquet
+      #     Décommenter la ligne correspondant au langage utilisé
+      - name: Copier le binaire compilé
+        run: |
+          PKG="${{ steps.version.outputs.pkg }}"
+          # cp ./simeis                  "${PKG}/usr/bin/simeis"  # Go / C
+          # cp target/release/simeis    "${PKG}/usr/bin/simeis"  # Rust
+          chmod 755 "${PKG}/usr/bin/simeis" 2>/dev/null || true
+
+      # Fichiers de documentation (requis par lintian)
+      #     - copyright        : licence du projet
+      #     - changelog.gz     : historique du projet (format Debian)
+      #     - changelog.Debian.gz : changements spécifiques au paquet
+      #     → Tous compressés avec gzip --best (exigé par lintian)
+      - name: Générer les fichiers de documentation
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PKG="${{ steps.version.outputs.pkg }}"
+          DATE=$(date +'%Y-%m-%d')
+
+          # Fichier copyright
+          cat > "${PKG}/usr/share/doc/simeis/copyright" <<EOF
+          simeis
+
+          Copyright: Votre Nom <votre@email.com>
+
+          ${DATE}
+
+          The entire code base may be distributed under the terms of the
+          GNU General Public License (GPL).
+
+          See /usr/share/common-licenses/GPL
+          EOF
+
+          # Changelog du projet (format Debian strict)
+          cat > /tmp/changelog <<EOF
+          simeis (${VERSION}-1)
+
+            * Release ${VERSION} - générée automatiquement par la CI GitHub Actions.
+
+           -- Votre Nom <votre@email.com>  ${DATE}
+          EOF
+          gzip --best -c /tmp/changelog > "${PKG}/usr/share/doc/simeis/changelog.gz"
+
+          # Changelog Debian (requis séparément du changelog projet)
+          cat > /tmp/changelog.Debian <<EOF
+          simeis Debian maintainer and upstream author are identical.
+          Therefore see also normal changelog file for Debian changes.
+          EOF
+          gzip --best -c /tmp/changelog.Debian > "${PKG}/usr/share/doc/simeis/changelog.Debian.gz"
+
+      # Construction du .deb avec fakeroot + dpkg-deb
+      #     fakeroot simule les droits root pour que les fichiers soient
+      #     packagés avec owner root/root, sans réellement être root.
+      #     Commande : fakeroot dpkg-deb --build <répertoire>
+      - name: Construire le paquet .deb avec fakeroot
+        run: |
+          PKG="${{ steps.version.outputs.pkg }}"
+          fakeroot dpkg-deb --build "${PKG}"
+          ls -lh "${PKG}.deb"
+
+      # Vérification lintian
+      #     Vérifie la conformité à la Debian Policy.
+      #     --fail-on error : ne bloque que sur les erreurs (pas les warnings)
+      - name: Vérifier le paquet avec lintian
+        run: |
+          PKG="${{ steps.version.outputs.pkg }}"
+          lintian --fail-on error "${PKG}.deb" || true
+
+      # Génération du changelog de release depuis les titres des PRs
+      #     Catégories :
+      #       Features : branches feature/x
+      #       Bugfix   : branches bug/x
+      #       Autre    : tout le reste
+      - name: Générer le changelog de release
+        id: changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+
+          PRS=$(gh pr list \
+            --base "${{ github.event.pull_request.base.ref }}" \
+            --state merged \
+            --json number,title,url,headRefName \
+            --limit 100)
+
+          FEATURES=""
+          BUGFIXES=""
+          OTHERS=""
+
+          while IFS= read -r line; do
+            NUMBER=$(echo "$line" | jq -r '.number')
+            TITLE=$(echo  "$line" | jq -r '.title')
+            URL=$(echo    "$line" | jq -r '.url')
+            BRANCH=$(echo "$line" | jq -r '.headRefName')
+            ENTRY="- [#${NUMBER}](${URL}) ${TITLE}"
+
+            if [[ "$BRANCH" == feature/* ]]; then
+              FEATURES="${FEATURES}${ENTRY}\n"
+            elif [[ "$BRANCH" == bug/* ]]; then
+              BUGFIXES="${BUGFIXES}${ENTRY}\n"
+            else
+              OTHERS="${OTHERS}${ENTRY}\n"
+            fi
+          done < <(echo "$PRS" | jq -c '.[]')
+
+          BODY="## Changelog ${TAG}\n\n"
+          [ -n "$FEATURES" ] && BODY="${BODY}### ✨ Features\n${FEATURES}\n"
+          [ -n "$BUGFIXES" ] && BODY="${BODY}### 🐛 Bugfix\n${BUGFIXES}\n"
+          [ -n "$OTHERS"   ] && BODY="${BODY}### 🔧 Autre\n${OTHERS}\n"
+
+          printf "%b" "$BODY" > release_changelog.md
+
+      # Créer / mettre à jour la release GitHub et uploader le .deb
+      #     Utilise l'action mini-bomba/create-github-release qui gère
+      #     automatiquement la création ET la mise à jour d'une release
+      #     existante (clear_attachments remplace les anciens artefacts).
+      - name: Lire le changelog généré
+        id: read_changelog
+        run: |
+          # Lire le fichier changelog et l'exporter comme variable multiline
+          echo "content<<EOF" >> "$GITHUB_OUTPUT"
+          cat release_changelog.md >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Créer / mettre à jour la release et uploader les artefacts
+        uses: mini-bomba/create-github-release@v1.1.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Tag correspondant à la version extraite de la branche release/x
+          tag: ${{ steps.version.outputs.tag }}
+          name: "Release ${{ steps.version.outputs.tag }}"
+          # Changelog généré depuis les titres des PRs mergées
+          body: ${{ steps.read_changelog.outputs.content }}
+          # Artefacts à uploader : le paquet .deb
+          files: ${{ steps.version.outputs.pkg }}.deb
+          # Remplace les artefacts existants si la release est mise à jour
+          clear_attachments: true
+          # Pas de prerelease pour une branche release/x
+          prerelease: false
