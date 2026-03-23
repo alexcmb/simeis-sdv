@@ -40,16 +40,17 @@ jobs:
       - name: Debug files
         run: |
           echo "=== TARGET ==="
-          ls -R target || true
+          ls -R target/release/ || true
           echo "=== DOCS ==="
-          ls -R docs || true
+          ls -R doc/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
-            target/release/*
+            target/release/simeis-server
+            doc/manual.pdf
 
   release:
     name: Create Release
