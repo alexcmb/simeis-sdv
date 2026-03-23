@@ -1,44 +1,81 @@
 name: Auto Release
 
-
 on:
   pull_request:
     branches:
       - 'release/**'
-  push:
-    branches:
-      - 'release/**'
-  workflow_run:
-    workflows: ["Release cargo"]
-    types:
-      - completed
 
 permissions:
   contents: write
   pull-requests: read
-  actions: read
 
 jobs:
-  release:
+  build:
+    name: Build project
     runs-on: ubuntu-latest
+    container:
+      image: rust:trixie
 
     steps:
-      - name: Extract branch
-        id: vars
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "branch=${GITHUB_BASE_REF}" >> $GITHUB_OUTPUT
-          else
-            echo "branch=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
-          fi
+      - uses: actions/checkout@v4
 
-      - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v3
+      - name: Cache cargo
+        id: cache-cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/local/cargo/registry
+            /usr/local/cargo/bin
+          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install typst
+        if: ${{ steps.cache-cargo.outputs.cache-hit != 'true' }}
+        run: cargo install typst-cli
+
+      # ✅ BUILD (corrigé : suppression du with inutile)
+      - name: Build release
+        run: make release
+
+      - name: Generate documentation
+        run: make documentation
+
+      - name: Clean
+        run: make clean
+
+      # 🔍 DEBUG (très important pour voir les fichiers)
+      - name: Debug files
+        run: |
+          echo "=== TARGET ==="
+          ls -R target || true
+          echo "=== DOCS ==="
+          ls -R docs || true
+
+      # ✅ Upload robuste
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          workflow: Release cargo
-          branch: ${{ steps.vars.outputs.branch }}
+          path: |
+            target/release/*
+          if-no-files-found: warn
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.pull_request.merged == true
+
+    steps:
+      # 📥 Download artifacts (correct)
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
           path: artifacts
+
+      - name: Extract branch
+        id: vars
+        run: echo "branch=${GITHUB_BASE_REF}" >> $GITHUB_OUTPUT
 
       - name: Get last release
         id: last_release
@@ -67,7 +104,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: "closed",
-              base: "${{ steps.vars.outputs.branch }}",
+              base: "${{ github.base_ref }}",
               per_page: 100
             });
 
@@ -102,9 +139,9 @@ jobs:
             }
 
             const body =
-              "## Features\n" + (features.join("\n") || "Aucune") + "\n\n" +
-              "## Bugfixes\n" + (bugfixes.join("\n") || "Aucun") + "\n\n" +
-              "## Autres\n" + (others.join("\n") || "Aucun");
+              "## 🚀 Features\n" + (features.join("\n") || "Aucune") + "\n\n" +
+              "## 🐛 Bugfixes\n" + (bugfixes.join("\n") || "Aucun") + "\n\n" +
+              "## 🔧 Autres\n" + (others.join("\n") || "Aucun");
 
             core.setOutput("body", body);
 
@@ -114,7 +151,6 @@ jobs:
           tag_name: ${{ steps.vars.outputs.branch }}
           name: Release ${{ steps.vars.outputs.branch }}
           body: ${{ steps.changelog.outputs.body }}
-          files: artifacts/**
+          files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #test
