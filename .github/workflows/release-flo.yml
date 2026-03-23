@@ -1,6 +1,5 @@
 name: Auto Release
 
-
 on:
   pull_request:
     branches:
@@ -99,9 +98,9 @@ jobs:
             }
 
             const body =
-              "## 🚀 Features\n" + (features.join("\n") || "Aucune") + "\n\n" +
-              "## 🐛 Bugfixes\n" + (bugfixes.join("\n") || "Aucun") + "\n\n" +
-              "## 🔧 Autres\n" + (others.join("\n") || "Aucun");
+              "## Features\n" + (features.join("\n") || "Aucune") + "\n\n" +
+              "## Bugfixes\n" + (bugfixes.join("\n") || "Aucun") + "\n\n" +
+              "## Autres\n" + (others.join("\n") || "Aucun");
 
             core.setOutput("body", body);
 
