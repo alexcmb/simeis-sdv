@@ -350,7 +350,6 @@ jobs:
           body: ${{ steps.read_changelog.outputs.content }}
           files: |
             ${{ steps.version.outputs.pkg }}.deb
-            /tmp/simeis-server.1
-            /doc/manuel.typ
+            doc/manuel.typ
           clear_attachments: true
           prerelease: false
