@@ -72,7 +72,8 @@ jobs:
           name: "Release ${{ github.base_ref }}"
           body: "Release generated automatically upon merging to ${{ github.base_ref }}"
           files: |
-            build-artifacts/**/*
+            build-artifacts/**/simeis-server
+            build-artifacts/**/*.pdf
           clear_attachments: true
 
 
