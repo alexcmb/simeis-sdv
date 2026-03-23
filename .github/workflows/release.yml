@@ -63,22 +63,59 @@ jobs:
           name: build-artifacts
           path: build-artifacts
 
+      - name: Generate Changelog
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_LIST=$(gh pr list --state merged --base '${{ github.base_ref }}' --json title,url,headRefName)
+          
+          FEATURES=$(echo "$PR_LIST" | jq -r '.[] | select(.headRefName | startswith("feature/")) | "- [\(.title)](\(.url))"')
+          BUGFIXES=$(echo "$PR_LIST" | jq -r '.[] | select(.headRefName | startswith("bug/")) | "- [\(.title)](\(.url))"')
+          AUTRES=$(echo "$PR_LIST" | jq -r '.[] | select((.headRefName | startswith("feature/")) or (.headRefName | startswith("bug/")) | not) | "- [\(.title)](\(.url))"')
+          
+          {
+            echo "CHANGELOG<<EOF"
+            if [ -n "$FEATURES" ]; then
+              echo "### Features"
+              echo "$FEATURES"
+              echo ""
+            fi
+            if [ -n "$BUGFIXES" ]; then
+              echo "### Bugfix"
+              echo "$BUGFIXES"
+              echo ""
+            fi
+            if [ -n "$AUTRES" ]; then
+              echo "### Autre"
+              echo "$AUTRES"
+              echo ""
+            fi
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
+      - name: Extract Tag Name
+        run: |
+          VERSION="${GITHUB_BASE_REF#release/}"
+          VERSION="${VERSION#v}"
+          TAG_NAME="v$VERSION"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+
       - name: Explicitly push Git Tag to avoid branch collision
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -f ${{ github.base_ref }}
-          git push -f origin refs/tags/${{ github.base_ref }}
+          git tag -f ${{ env.TAG_NAME }}
+          git push -f origin refs/tags/${{ env.TAG_NAME }}
 
       - name: Release the new binaries
         uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.base_ref }}
+          tag: ${{ env.TAG_NAME }}
           skip_tag_creation: true
           prerelease: false
-          name: "Release ${{ github.base_ref }}"
-          body: "Release generated automatically upon merging to ${{ github.base_ref }}"
+          name: "Release ${{ env.TAG_NAME }}"
+          body: ${{ env.CHANGELOG }}
           files: |
             build-artifacts/**/simeis-server
             build-artifacts/**/*.pdf
