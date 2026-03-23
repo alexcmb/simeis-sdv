@@ -1,17 +1,15 @@
-#WILLIAM.
 name: Release cargo
 on:
-  push:
-    branches:
-      - 'main'
   pull_request:
+    types: [closed]
     branches:
-      - 'main'
+      - 'release/*'
 
 jobs:
   build:
     name: cargo build
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
     container:
       image: rust:trixie
     steps:
@@ -51,9 +49,9 @@ jobs:
     name: Publish Release
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,26 +63,16 @@ jobs:
           name: build-artifacts
           path: build-artifacts
 
-      - name: Put commit hash/name in env variables
-        run: |
-          echo "GIT_HASH=$(git rev-parse --short=8 HEAD)" >> $GITHUB_ENV
-          echo "GIT_MESSAGE<<EOF" >> $GITHUB_ENV
-          git log -1 --pretty=%B >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
       - name: Release the new binaries
         uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: "latest"
-          prerelease: true
-          name: "Latest Commit, that compiles"
-          body: |
-            This automatic prerelease is built from commit ${{ env.GIT_HASH }} and was triggered by @${{ github.actor }}
-            [Github Actions workflow run that built this prerelease](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-            Commit message:
-            ${{ env.GIT_MESSAGE }}
+          tag: ${{ github.base_ref }}
+          prerelease: false
+          name: "Release ${{ github.base_ref }}"
+          body: "Release generated automatically upon merging to ${{ github.base_ref }}"
           files: |
             build-artifacts/**/*
-          clear_attachments: true
+          clear_attachments: true
+
+
