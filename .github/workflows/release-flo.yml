@@ -1,0 +1,107 @@
+name: Auto Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - 'release/**'
+
+permissions:
+  contents: write
+  pull-requests: read
+  actions: read
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          name: build-artifacts
+          workflow: Release cargo
+          branch: ${{ github.base_ref }}
+          path: artifacts
+
+      - name: Extract branch
+        id: vars
+        run: echo "branch=${GITHUB_BASE_REF}" >> $GITHUB_OUTPUT
+
+      - name: Get last release
+        id: last_release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 1
+            });
+
+            core.setOutput(
+              "date",
+              releases.data.length ? releases.data[0].published_at : null
+            );
+
+      - name: Get merged PRs
+        id: prs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const since = "${{ steps.last_release.outputs.date }}";
+
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "closed",
+              base: "${{ steps.vars.outputs.branch }}",
+              per_page: 100
+            });
+
+            return prs.filter(pr =>
+              pr.merged_at &&
+              (!since || new Date(pr.merged_at) > new Date(since))
+            );
+
+      - name: Generate changelog
+        id: changelog
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prs = ${{ steps.prs.outputs.result }};
+
+            let features = [];
+            let bugfixes = [];
+            let others = [];
+
+            for (const pr of prs) {
+              const line = `- [${pr.title}](${pr.html_url})`;
+
+              if (pr.head.ref.startsWith("feature/")) {
+                features.push(line);
+              } else if (pr.head.ref.startsWith("bug/")) {
+                bugfixes.push(line);
+              } else {
+                others.push(line);
+              }
+            }
+
+            core.setOutput("body", `
+${features.join("\n") || "Aucune"}
+
+${bugfixes.join("\n") || "Aucun"}
+
+${others.join("\n") || "Aucun"}
+`);
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.branch }}
+          name: Release ${{ steps.vars.outputs.branch }}
+          body: ${{ steps.changelog.outputs.body }}
+          files: artifacts/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
