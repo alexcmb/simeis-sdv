@@ -1,0 +1,27 @@
+name: new_release
+# Déclenché quand une PR est fermée (mergée ou non) sur une branche release/x
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - 'release/**'
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  #pour accéder à toutes les branches
+
+      - name: Extract the version from the branch name
+        id: version
+        run: |
+          VERSION="${{ github.event.pull_request.base.ref }}"
+          VERSION="${VERSION#release/}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
