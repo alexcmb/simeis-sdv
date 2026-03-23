@@ -2,7 +2,7 @@
 name: Enforce release branch policy
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened]
 
 jobs:
@@ -15,7 +15,8 @@ jobs:
             startsWith(github.event.pull_request.base.ref, 'release/')
             && github.event.pull_request.head.ref != 'main'
             && !startsWith(github.event.pull_request.head.ref, 'bug/')
+            && !startsWith(github.event.pull_request.head.ref, 'feature/')
           }}
         uses: superbrothers/close-pull-request@v3
         with:
-          comment: "You cannot merge on release from other branches than main or bug/*"
+          comment: "You cannot merge on release from other branches than main, bug/* or feature/*"
