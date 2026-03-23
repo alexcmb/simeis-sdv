@@ -96,9 +96,8 @@ jobs:
           Priority: optional
           Architecture: amd64
           Depends: libc6, cmatrix
-          Maintainer: Votre Nom <votre@email.com>
+          Maintainer: hello@hello.com
           Description: Serveur de demonstration CI/CD
-           Paquet genere automatiquement par la CI GitHub Actions.
           EOF
 
       # Tout fichier sous /etc doit être déclaré comme conffile.
@@ -190,7 +189,7 @@ jobs:
           .SH BUGS
           Aucun bug connu pour le moment.
           .SH AUTHOR
-          Votre Nom (votre@email.com)
+          hello@hello.com
           .SH COPYRIGHT
           Distribue sous licence CC BY-NC \- Litchi Pi 2026
           EOF
@@ -258,7 +257,7 @@ jobs:
 
             * Release ${VERSION} generee automatiquement par la CI.
 
-           -- Votre Nom <votre@email.com>  ${RFC_DATE}
+           -- Votre Nom hello@hello.com  ${RFC_DATE}
           EOF
           gzip --best -n -c /tmp/changelog \
             > "${PKG}/usr/share/doc/simeis/changelog.gz"
@@ -270,7 +269,7 @@ jobs:
             * Maintainer and upstream author are identical.
               See changelog for full history.
 
-           -- Votre Nom <votre@email.com>  ${RFC_DATE}
+           -- Votre Nom hello@hello.com  ${RFC_DATE}
           EOF
           gzip --best -n -c /tmp/changelog.Debian \
             > "${PKG}/usr/share/doc/simeis/changelog.Debian.gz"
@@ -332,6 +331,9 @@ jobs:
           cat release_changelog.md >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
+      - name: generate documentation
+        run: make documentation
+
       # On utilise l'image prebuilt sur ghcr.io pour éviter le build du
       # Dockerfile de l'action, qui échoue car Debian Buster est en fin de vie
       # et ses dépôts apt ne répondent plus.
@@ -345,5 +347,6 @@ jobs:
           files: |
             ${{ steps.version.outputs.pkg }}.deb
             /tmp/simeis-server.1
+            /doc/manuel.typ
           clear_attachments: true
           prerelease: false
