@@ -61,7 +61,7 @@ jobs:
       #   PKG/usr/bin/             -> le binaire
       #   PKG/usr/share/man/       -> page de manuel compressée
       #   PKG/usr/share/doc/       -> copyright, changelogs compressés
-      #   PKG/etc/systemd/system/  -> le fichier de service (pas /etc !)
+      #   PKG/etc/systemd/system/  -> le fichier de service
       #
       # Le chmod 755 sur les répertoires est obligatoire selon la Debian Policy.
       - name: Créer l'arborescence du paquet Debian
@@ -95,7 +95,7 @@ jobs:
           Version: ${VERSION}-1
           Section: utils
           Priority: optional
-          Architecture: x86_64
+          Architecture: amd64
           Depends: libc6, cmatrix
           Maintainer: Votre Nom <votre@email.com>
           Description: Serveur de demonstration CI/CD
@@ -103,14 +103,13 @@ jobs:
           EOF
 
       # Tout fichier sous /etc doit être déclaré comme conffile.
-      # On utilise etc/systemd/system/ à la place, donc ce fichier est vide ici,
       # mais on le garde pour être explicite.
+      # Tout fichier dans /etc doit être listé dans conffiles pour que dpkg
+      # sache qu'il ne doit pas l'écraser lors d'une mise à jour.
       - name: Générer DEBIAN/conffiles
         run: |
           PKG="${{ steps.version.outputs.pkg }}"
-          # Le service est dans etc/systemd/system/, pas dans /etc,
-          # donc il n'y a pas de conffiles à déclarer.
-          touch "${PKG}/DEBIAN/conffiles"
+          echo "/etc/systemd/system/simeis.service" > "${PKG}/DEBIAN/conffiles"
 
       # Exécuté après l'installation du paquet.
       # Crée l'utilisateur système "simeis" s'il n'existe pas, puis démarre le service.
@@ -199,7 +198,6 @@ jobs:
           gzip --best -n -c /tmp/simeis-server.1 \
             > "${PKG}/usr/share/man/man1/simeis-server.1.gz"
 
-      # Le service va dans etc/systemd/system/,
       # sinon lintian remonte "systemd-service-in-odd-location".
       - name: Générer simeis.service
         run: |
@@ -350,6 +348,8 @@ jobs:
           tag: ${{ steps.version.outputs.tag }}
           name: "Release ${{ steps.version.outputs.tag }}"
           body: ${{ steps.read_changelog.outputs.content }}
-          files: ${{ steps.version.outputs.pkg }}.deb
+          files: |
+            ${{ steps.version.outputs.pkg }}.deb
+            /tmp/simeis-server.1
           clear_attachments: true
           prerelease: false
