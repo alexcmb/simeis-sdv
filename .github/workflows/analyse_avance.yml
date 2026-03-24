@@ -17,8 +17,17 @@ jobs:
 
       # - name: Check Python formatting
       #   run: make python-check
+      - name: Cache cargo packages
+        id: cache-cargo-tools
+        uses: actions/cache@v4
+        with:
+          path: |
+              /usr/local/cargo/registry
+              /usr/local/cargo/bin
+          key: cargo-typst-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install cargo tools
+      - if: ${{ steps.cache-cargo-tools.outputs.cache-hit != 'true' }}        
+        name: Install cargo tools
         run: |
           cargo install cargo-audit
           cargo install cargo-udeps
