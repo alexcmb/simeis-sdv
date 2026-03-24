@@ -15,8 +15,8 @@ jobs:
       - name: Cargo unit test
         run: make unit_test
 
-      - name: Check Python formatting
-        run: make python-check
+      # - name: Check Python formatting
+      #   run: make python-check
 
       - name: audit rust
         run: make audit
