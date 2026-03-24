@@ -243,7 +243,6 @@ jobs:
             build-artifacts/**/simeis-server
             build-artifacts/**/*.pdf
             build-artifacts/**/*.deb
-            build-artifacts/**/*.tar
           clear_attachments: true
 
 
