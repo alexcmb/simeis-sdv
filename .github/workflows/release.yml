@@ -174,11 +174,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download all artifacts
+      - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
+          name: build-artifacts
           path: build-artifacts
-          merge-multiple: true
+
+      - name: Download docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: build-artifacts
 
       - name: Generate Changelog
         env:
