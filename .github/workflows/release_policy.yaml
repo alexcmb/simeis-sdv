@@ -15,7 +15,6 @@ jobs:
             startsWith(github.event.pull_request.base.ref, 'release/')
             && github.event.pull_request.head.ref != 'main'
             && !startsWith(github.event.pull_request.head.ref, 'bug/')
-            && !startsWith(github.event.pull_request.head.ref, 'feature/') 
           }}
 
         uses: superbrothers/close-pull-request@v3
