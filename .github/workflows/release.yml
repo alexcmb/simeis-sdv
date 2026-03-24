@@ -114,7 +114,7 @@ jobs:
       - name: Copy binary to context
         run: |
           mkdir -p target/release
-          cp build-artifacts/**/simeis-server target/release/simeis-server || cp build-artifacts/simeis-server target/release/
+          find build-artifacts -type f -name "simeis-server" -exec cp {} target/release/ \;
           chmod +x target/release/simeis-server
 
       - name: Login to Docker Hub
@@ -143,9 +143,8 @@ jobs:
       - name: Upload Docker image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
+          name: docker-image
           path: simeis-docker-image.tar
-          merge-multiple: true
 
       - name: Test
         run: |
@@ -172,11 +171,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
           path: build-artifacts
+          merge-multiple: true
 
       - name: Generate Changelog
         env:
