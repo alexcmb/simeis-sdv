@@ -1,10 +1,17 @@
-FROM rust:1.85.0-bookworm
-
+# Étape 1 : build Rust
+FROM rust:1.85.0-bookworm AS builder
 WORKDIR /app
 
-# On copie uniquement le binaire déjà compilé par le workflow via make release
-COPY target/release/simeis-server .
+COPY Cargo.toml Cargo.lock ./
+COPY src ./src
+
+RUN cargo build --release
+
+# Étape 2 : image finale minimale
+FROM debian:bookworm-slim
+WORKDIR /app
+
+COPY --from=builder /app/target/release/simeis-server /app/simeis-server
 
 EXPOSE 8080
-
 CMD ["./simeis-server"]

@@ -1,0 +1,61 @@
+name: Docker Release
+
+# Se déclenche sur les merges dans main ou release/*
+on:
+  push:
+    branches:
+      - main
+      - 'release/**'
+
+jobs:
+  docker-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Installer Rust (optionnel, GitHub runner a déjà Rust)
+      - name: Set Rust stable
+        run: |
+          rustup update stable
+          rustup default stable
+
+      # Build Rust
+      - name: Build Rust release
+        run: cargo build --release
+
+      # Construire l'image Docker
+      - name: Build Docker image
+        run: |
+          TAG="${{ github.ref_name }}"
+          docker build -f .github/Dockerfile -t "simeis-server:${TAG}" .
+
+      # Tester l'image
+      - name: Test Docker image
+        run: |
+          TAG="${{ github.ref_name }}"
+          docker run --rm -d -p 8080:8080 --name test-simeis "simeis-server:${TAG}"
+          sleep 5
+          curl -f http://localhost:8080
+          docker stop test-simeis
+
+      - name: Save Docker image
+        run: |
+          TAG="${{ github.ref_name }}"
+          docker image save "simeis-server:${TAG}" -o "simeis-server_${TAG}.tar"
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: simeis-server_${TAG}.tar
+
+      - name: Login to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Tag and push Docker image
+        run: |
+          TAG="${{ github.ref_name }}"
+          docker tag "simeis-server:${TAG}" "${{ secrets.DOCKERHUB_USERNAME }}/simeis-server:${TAG}"
+          docker push "${{ secrets.DOCKERHUB_USERNAME }}/simeis-server:${TAG}"
