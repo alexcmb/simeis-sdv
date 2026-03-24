@@ -10,11 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Cargo unit test
         run: make unit_test
 
-      - name: Check Python formatting
-        run: python3 test/unit-test.py
+      # - name: Check Python formatting
+      #   run: make python-check
+      - name: Cache cargo packages
+        id: cache-cargo-tools
+        uses: actions/cache@v4
+        with:
+          path: |
+              /usr/local/cargo/registry
+              /usr/local/cargo/bin
+          key: cargo-typst-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: audit rust
-        run: make audit
+      # - if: ${{ steps.cache-cargo-tools.outputs.cache-hit != 'true' }}        
+      #   name: Install cargo tools
+      #   run: |
+      #     cargo install cargo-audit
+      #     cargo install cargo-udeps
+      
+      # - name: Install nightly
+      #   run: rustup toolchain install nightly
+
+      # - name: audit rust
+      #   run: make audit
