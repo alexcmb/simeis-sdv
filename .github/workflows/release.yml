@@ -350,7 +350,7 @@ jobs:
           TAG="${{ steps.version.outputs.tag }}"
           docker run --rm -d -p 8080:8080 --name test-simeis "simeis-server:${TAG}"
           sleep 5
-          curl -f http://localhost:8080
+          curl -f http://localhost:8080/ping
           docker stop test-simeis
 
       - name: Save Docker image
