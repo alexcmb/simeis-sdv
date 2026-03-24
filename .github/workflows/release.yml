@@ -338,45 +338,6 @@ jobs:
       - name: genere la documentation
         run: make documentation
 
-      # On utilise l'image prebuilt sur ghcr.io pour éviter le build du
-      # Dockerfile de l'action, qui échoue car Debian Buster est en fin de vie
-      # et ses dépôts apt ne répondent plus.
-            # On build l'image depuis le binaire compilé par make release,
-      # puis on vérifie qu'elle démarre correctement avant d'aller plus loin.
-      - name: Construire l'image Docker
-        run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          docker build -f .github/Dockerfile -t "simeis-server:${TAG}" .
- 
-      - name: Tester l'image Docker
-        run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          docker run --rm "simeis-server:${TAG}"
-
-      # comme artefact de la release et la réutiliser sans registry.
-      - name: Exporter l'image Docker
-        run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          docker image save "simeis-server:${TAG}" -o "simeis-server_${TAG}.tar"
- 
-      # On utilise l'image prebuilt sur ghcr.io pour éviter le build du
-      # Dockerfile de l'action, qui échoue car Debian Buster est en fin de vie
-      # et ses dépôts apt ne répondent plus.
-      - name: Créer / mettre à jour la release
-        uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.version.outputs.tag }}
-          name: "Release ${{ steps.version.outputs.tag }}"
-          body: ${{ steps.read_changelog.outputs.content }}
-          files: |
-            ${{ steps.version.outputs.pkg }}.deb
-            /tmp/simeis-server.1
-            doc/manual.pdf
- 
-          clear_attachments: true
-          prerelease: false
-
 #### IMAGE DOCKER
 
       - name: Build Docker image
