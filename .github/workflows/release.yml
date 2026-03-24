@@ -373,9 +373,15 @@ jobs:
           TAG="${{ steps.version.outputs.tag }}"
           docker image save "simeis-server:${TAG}" -o "simeis-server_${TAG}.tar"
  
-      # On utilise l'image prebuilt sur ghcr.io pour éviter le build du
-      # Dockerfile de l'action, qui échoue car Debian Buster est en fin de vie
-      # et ses dépôts apt ne répondent plus.
+      - name: Pousser l'image sur DockerHub
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          echo "${{ secrets.DOCKERHUB_WILLIAM_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}" --password-stdin
+          docker tag "simeis-server:${TAG}" "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}/simeis-server:${TAG}"
+          docker tag "simeis-server:${TAG}" "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}/simeis-server:latest"
+          docker push "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}/simeis-server:${TAG}"
+          docker push "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}/simeis-server:latest"
+
       - name: Créer / mettre à jour la release
         uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
@@ -387,6 +393,7 @@ jobs:
             ${{ steps.version.outputs.pkg }}.deb
             /tmp/simeis-server.1
             doc/manual.pdf
+            simeis-server_{{ steps.version.outputs.tag }}.tar
  
           clear_attachments: true
           prerelease: false
