@@ -95,10 +95,75 @@ jobs:
       - name: make clean
         run: make clean
 
+  docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      TEST_TAG: simeis-server:test
+      LATEST_TAG: ${{ vars.DOCKERHUB_USERNAME }}/simeis-server:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: build-artifacts
+
+      - name: Copy binary to context
+        run: |
+          mkdir -p target/release
+          cp build-artifacts/**/simeis-server target/release/simeis-server || cp build-artifacts/simeis-server target/release/
+          chmod +x target/release/simeis-server
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.SECRET_NAME }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and export to Docker
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: .github/Dockerfile
+          load: true
+          tags: ${{ env.TEST_TAG }}
+
+      - name: Save Docker image as tar
+        run: docker save -o simeis-docker-image.tar ${{ env.TEST_TAG }}
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: simeis-docker-image.tar
+          merge-multiple: true
+
+      - name: Test
+        run: |
+          docker run --rm ${{ env.TEST_TAG }} --help || true
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: .github/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.LATEST_TAG }}
+
   publish_release:
     name: Publish Release
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, docker]
     permissions:
       contents: write
       pull-requests: read
@@ -170,6 +235,7 @@ jobs:
             build-artifacts/**/simeis-server
             build-artifacts/**/*.pdf
             build-artifacts/**/*.deb
+            build-artifacts/**/*.tar
           clear_attachments: true
 
 
