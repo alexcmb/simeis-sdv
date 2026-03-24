@@ -4,9 +4,6 @@ name: Release Artifacts
 # Se déclenche quand une PR est fermée sur une branche release/x.
 # Le job ne s'exécute que si la PR a été mergée (pas juste fermée).
 on:
-  push: # à retirer
-    branches: 
-      - 'release/**'
   pull_request:
     types:
       - closed
@@ -15,7 +12,7 @@ on:
 
 jobs:
   create-release:
-    # if: github.event.pull_request.merged == true à decommenter
+    if: github.event.pull_request.merged == true à decommenter
     runs-on: ubuntu-latest
 
     permissions:
