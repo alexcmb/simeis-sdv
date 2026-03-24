@@ -369,9 +369,12 @@ jobs:
 
       # comme artefact de la release et la réutiliser sans registry.
       - name: Exporter l'image Docker
+        id: docker_save
         run: |
           TAG="${{ steps.version.outputs.tag }}"
-          docker image save "simeis-server:${TAG}" -o "simeis-server_${TAG}.tar"
+          ARCHIVE="simeis-server_${TAG}.tar"
+          docker image save "simeis-server:${TAG}" -o "${ARCHIVE}"
+          echo "archive=${ARCHIVE}" >> "$GITHUB_OUTPUT"
  
       - name: Pousser l'image sur DockerHub
         run: |
@@ -391,9 +394,8 @@ jobs:
           body: ${{ steps.read_changelog.outputs.content }}
           files: |
             ${{ steps.version.outputs.pkg }}.deb
-            /tmp/simeis-server.1
             doc/manual.pdf
-            simeis-server_{{ steps.version.outputs.tag }}.tar
+            ${{ steps.docker_save.outputs.archive }}
  
           clear_attachments: true
           prerelease: false
