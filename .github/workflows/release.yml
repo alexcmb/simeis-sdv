@@ -360,7 +360,11 @@ jobs:
       - name: Tester l'image Docker
         run: |
           TAG="${{ steps.version.outputs.tag }}"
-          docker run --rm "simeis-server:${TAG}"
+          docker run -d --name simeis-test -p 8080:8080 "simeis-server:${TAG}"
+          sleep 3
+          curl --fail http://localhost:8080 || (docker logs simeis-test && exit 1)
+          docker stop simeis-test
+          docker rm simeis-test
 
       # comme artefact de la release et la réutiliser sans registry.
       - name: Exporter l'image Docker
