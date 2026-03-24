@@ -1,6 +1,5 @@
 name: Docker Release
 
-# Se déclenche sur les merges dans main ou release/*
 on:
   push:
     branches:
@@ -11,30 +10,39 @@ jobs:
   docker-release:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Installer Rust (optionnel, GitHub runner a déjà Rust)
-      - name: Set Rust stable
+      - name: Extraire la version
+        id: version
         run: |
-          rustup update stable
-          rustup default stable
+          REF="${GITHUB_REF#refs/heads/}"
+          VERSION="${REF#release/}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "binary=simeis-server" >> "$GITHUB_OUTPUT"
 
-      # Build Rust
-      - name: Build Rust release
-        run: cargo build --release
 
-      # Construire l'image Docker
+      - name: Télécharger artefact Release
+        uses: actions/download-artifact@v4
+        with:
+          name: simeis-release-binary
+          path: ./target/release/
+
       - name: Build Docker image
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${{ steps.version.outputs.tag }}"
           docker build -f .github/Dockerfile -t "simeis-server:${TAG}" .
 
-      # Tester l'image
       - name: Test Docker image
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${{ steps.version.outputs.tag }}"
           docker run --rm -d -p 8080:8080 --name test-simeis "simeis-server:${TAG}"
           sleep 5
           curl -f http://localhost:8080
@@ -42,7 +50,7 @@ jobs:
 
       - name: Save Docker image
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${{ steps.version.outputs.tag }}"
           docker image save "simeis-server:${TAG}" -o "simeis-server_${TAG}.tar"
 
       - name: Upload Docker image artifact
@@ -51,11 +59,11 @@ jobs:
           name: docker-image
           path: simeis-server_${TAG}.tar
 
-      - name: Login to DockerHub
+      - name: Login Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Tag and push Docker image
         run: |
-          TAG="${{ github.ref_name }}"
+          TAG="${{ steps.version.outputs.tag }}"
           docker tag "simeis-server:${TAG}" "${{ secrets.DOCKERHUB_USERNAME }}/simeis-server:${TAG}"
           docker push "${{ secrets.DOCKERHUB_USERNAME }}/simeis-server:${TAG}"
