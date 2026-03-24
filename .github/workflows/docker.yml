@@ -6,6 +6,11 @@ on:
       - main
       - 'release/**'
 
+  workflow_run:
+    workflows: ["Release Artifacts"]
+    types:
+      - completed
+
 jobs:
   docker-release:
     runs-on: ubuntu-latest
