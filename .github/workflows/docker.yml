@@ -6,10 +6,7 @@ on:
       - main
       - 'release/**'
 
-  workflow_run:
-    workflows: ["Release Artifacts"]
-    types:
-      - completed
+
 
 jobs:
   docker-release:
@@ -19,6 +16,10 @@ jobs:
       contents: read
 
     steps:
+
+      - name: Build (make release)
+        run: make release
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
