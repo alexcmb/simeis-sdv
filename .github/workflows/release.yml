@@ -148,7 +148,10 @@ jobs:
 
       - name: Test
         run: |
-          docker run --rm ${{ env.TEST_TAG }} --help || true
+          docker run -d --name test_container ${{ env.TEST_TAG }}
+          sleep 3
+          docker logs test_container
+          docker stop test_container
 
       - name: Build and push
         uses: docker/build-push-action@v7
