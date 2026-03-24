@@ -17,9 +17,7 @@ jobs:
         run: make unit_test
 
       - name: Check Python formatting
-        run: python3 test/unit-test.py
         run: python3 tests/unit-test.py
 
       - name: audit rust
-        run: make audit
         run: make audit

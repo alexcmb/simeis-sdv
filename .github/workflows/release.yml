@@ -1,11 +1,14 @@
-# William
 name: Release
 
 on:
   pull_request:
     types: [closed]
     branches:
-      - 'release/**'
+      - "release/**"
+
+permissions:
+  contents: write
+  pull-requests: read
 
 jobs:
   release:
@@ -20,12 +23,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Extraire la version depuis le nom de branche (release/nazim → nazim)
+      # Extraire la version depuis le nom de branche (release/nazim -> nazim)
       - name: Get version
         id: version
         run: |
           BRANCH="${{ github.event.pull_request.base.ref }}"
-          echo "version=${BRANCH#release/}" >> $GITHUB_OUTPUT
+          echo "version=${BRANCH#release/}" >> "$GITHUB_OUTPUT"
 
       - name: Cache cargo
         id: cache-cargo
@@ -46,6 +49,7 @@ jobs:
 
       - name: Build documentation
         run: make documentation
+      
 
       - name: Generate changelog
         id: changelog
@@ -53,8 +57,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           apt-get update && apt-get install -y gh jq
-
-          git config --global --add safe.directory /__w/simeis-sdv/simeis-sdv
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
           BRANCH="release/${{ steps.version.outputs.version }}"
           FEATURES=""
@@ -71,20 +74,20 @@ jobs:
             LINE="- [$TITLE]($URL)"
 
             case "$HEAD" in
-              feature/*) FEATURES="$FEATURES\n$LINE" ;;
-              bug/*)     BUGS="$BUGS\n$LINE" ;;
-              *)         OTHER="$OTHER\n$LINE" ;;
+              feature/*) FEATURES="${FEATURES}\n${LINE}" ;;
+              bug/*) BUGS="${BUGS}\n${LINE}" ;;
+              *) OTHER="${OTHER}\n${LINE}" ;;
             esac
           done
 
           {
             echo "notes<<EOF"
             echo "## Changelog"
-            [ -n "$FEATURES" ] && echo -e "\n### Features\n$FEATURES"
-            [ -n "$BUGS" ]     && echo -e "\n### Bugfix\n$BUGS"
-            [ -n "$OTHER" ]    && echo -e "\n### Autre\n$OTHER"
+            [ -n "$FEATURES" ] && echo -e "\n### Features${FEATURES}"
+            [ -n "$BUGS" ] && echo -e "\n### Bugfix${BUGS}"
+            [ -n "$OTHER" ] && echo -e "\n### Autre${OTHER}"
             echo "EOF"
-          } >> $GITHUB_OUTPUT
+          } >> "$GITHUB_OUTPUT"
 
       # Créer la release et uploader les artefacts
       - name: Create release
@@ -97,4 +100,4 @@ jobs:
             --title "v$VERSION" \
             --notes "${{ steps.changelog.outputs.notes }}" \
             ./target/release/simeis-server \
-            ./docs/manual.pdf
+            ./doc/manual.pdf

@@ -16,7 +16,5 @@ jobs:
         run: apt update && apt install build-essential -y
       # - name: Install Rust
       #   uses: dtolnay/rust-toolchain@stable
-      - name: make clean
-        run: make clean
       - name: Cargo test
         run: make unit_test
