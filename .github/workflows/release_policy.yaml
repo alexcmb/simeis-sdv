@@ -15,7 +15,11 @@ jobs:
             startsWith(github.event.pull_request.base.ref, 'release/')
             && github.event.pull_request.head.ref != 'main'
             && !startsWith(github.event.pull_request.head.ref, 'bug/')
+            && !startsWith(github.event.pull_request.head.ref, 'release/')
           }}
+
         uses: superbrothers/close-pull-request@v3
         with:
           comment: "You cannot merge on release from other branches than main or bug/*"
+
+# a retirer ligne 18
