@@ -383,15 +383,6 @@ jobs:
 
 #### IMAGE DOCKER
 
-      - name: Extraire la version
-        id: version
-        run: |
-          REF="${GITHUB_REF#refs/heads/}"
-          VERSION="${REF#release/}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-          echo "binary=simeis-server" >> "$GITHUB_OUTPUT"
-
       - name: Build Docker image
         run: |
           TAG="${{ steps.version.outputs.tag }}"
