@@ -18,5 +18,13 @@ jobs:
       # - name: Check Python formatting
       #   run: make python-check
 
+      - name: Install cargo tools
+        run: |
+          cargo install cargo-audit
+          cargo install cargo-udeps
+      
+      - name: Install nightly
+        run: rustup toolchain install nightly
+
       - name: audit rust
         run: make audit
