@@ -1,4 +1,4 @@
-PORT=8080
+PORT=8082
 URL=f"http://simeis-server:{PORT}"
 # URL=f"http://103.45.247.164:{PORT}"
 
