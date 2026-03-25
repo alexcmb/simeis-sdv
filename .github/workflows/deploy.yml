@@ -23,13 +23,10 @@ jobs:
     - name: Check port reachability
       run: nc -zv ${{ secrets.HOST_IP }} ${{ secrets.HOST_PORT }}
 
-    - name: SSH debug
+    - name: Start SSH tunnel
       run: |
-        ssh -vvv \
-          -o UserKnownHostsFile=~/.ssh/known_hosts \
-          -o StrictHostKeyChecking=yes \
-          -i ~/.ssh/id_rsa \
+        ssh -i ~/.ssh/id_rsa \
           -p ${{ secrets.HOST_PORT }} \
-          william@${{ secrets.HOST_IP }} \
-          "echo OK"
+          -L 2222:10.185.11.7:22 \
+          william@${{ secrets.HOST_IP }}
           
