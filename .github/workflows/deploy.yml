@@ -32,10 +32,11 @@ jobs:
     #     scp -vvv -i ~/.ssh/id_rsa -P ${{ secrets.HOST_PORT }} \
     #     ${{ steps.url.outputs.deb_file }} \
     #     william@${{ secrets.HOST_IP }}:${{ steps.url.outputs.deb_file }}
-    # - name: Test SSH command
-    #   run: |
-    #     ssh  -vvv -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
-    #       william@${{ secrets.HOST_IP }} "echo hello" 
+    - name: Test SSH command
+      run: |
+        ssh  -vvv -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
+          william@${{ secrets.HOST_IP }} "mkdir test" 
+
     - name: install CMATROX
       run: |
         ssh -vvv -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
