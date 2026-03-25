@@ -13,6 +13,9 @@ jobs:
         echo "${{ secrets.SSH_WILLIAM }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         echo "${{ secrets.KNOW_HOST_WILLIAM }}" >> ~/.ssh/known_hosts
+
+    - name: Debug secret length
+      run: echo "${{ secrets.KNOW_HOST_WILLIAM }}" | wc -c
   
     - name: test key
       run: cat ~/.ssh/known_hosts
