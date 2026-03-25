@@ -434,9 +434,8 @@ jobs:
             sudo systemctl restart simeis.service
             echo "État du service après redémarrage :"
             sudo systemctl status simeis.service --no-pager
-      EOF
+          EOF
 
-    echo "Déploiement terminé avec succès."
       - name: Tester le serveur déployé
         run: |
           sleep 5
