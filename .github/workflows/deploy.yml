@@ -30,6 +30,5 @@ jobs:
           -o StrictHostKeyChecking=yes \
           -i ~/.ssh/id_rsa \
           -p ${{ secrets.HOST_PORT }} \
-          william@${{ secrets.HOST_IP }} \
-          "echo OK"
+          william@${{ secrets.HOST_IP }}
       
