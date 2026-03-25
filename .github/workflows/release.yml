@@ -275,7 +275,7 @@ jobs:
 
       - name: Construire le paquet .deb
         run: |
-          PKG="${{ steps.version.outputs.pkg }}"
+          PKG="simeis-flo"
           fakeroot dpkg-deb --build "${PKG}"
           ls -lh "${PKG}.deb"
 
