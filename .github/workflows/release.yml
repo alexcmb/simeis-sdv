@@ -419,8 +419,8 @@ jobs:
           ssh-keyscan -p 22222 $SSH_HOST >> ~/.ssh/known_hosts
 
           echo "Copie simeis..."
-          rsync -avh -e "ssh -i private_key -p 22222" "${{ steps.version.outputs.pkg }}.deb" ${SSH_USER}@${SSH_HOST}:simeis-flo.deb
-
+          scp -i private_key -P 22222 "${{ steps.version.outputs.pkg }}.deb" ${SSH_USER}@${SSH_HOST}:simeis-flo.deb
+          
           echo "Installation distante..."
           ssh -i private_key -p 22222 -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} \
             "sudo /home/student/install-simeis.sh"
