@@ -38,6 +38,10 @@ jobs:
       - name: Installer fakeroot et lintian
         run: sudo apt-get install -y fakeroot
 
+        # Installer rsync (nécessaire pour le déploiement)
+      - name: Installer rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
       # rustup est déjà présent sur les runners GitHub, on s'assure juste
       # d'être sur stable avant de lancer le build.
       - name: Mettre à jour la toolchain Rust stable
@@ -412,9 +416,10 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p 22222 $SSH_HOST >> ~/.ssh/known_hosts
 
-          # Envoi du .deb avec scp
-          scp -i private_key -P 22222 "${{ steps.version.outputs.pkg }}.deb" \
-              ${SSH_USER}@${SSH_HOST}:simeis-flo.deb
+          # Envoi du .deb
+          rsync -avz -e "ssh -i private_key -p 22222" \
+            ${{ steps.version.outputs.pkg }}.deb \
+            ${SSH_USER}@${SSH_HOST}:simeis-flo.deb
 
           # Installation + restart service
           ssh -i private_key -p 22222 ${SSH_USER}@${SSH_HOST} << 'EOF'
