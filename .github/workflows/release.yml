@@ -1,4 +1,4 @@
-#WILLIAM
+#WILLIAM d
 name: Release Artifacts
 
 # Se déclenche quand une PR est fermée sur une branche release/x.
@@ -12,7 +12,7 @@ on:
 
 jobs:
   create-release:
-    if: github.event.pull_request.merged == true à decommenter
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     permissions:
@@ -360,17 +360,31 @@ jobs:
       - name: Tester l'image Docker
         run: |
           TAG="${{ steps.version.outputs.tag }}"
-          docker run --rm "simeis-server:${TAG}"
+          docker run -d --name simeis-test -p 8080:8080 "simeis-server:${TAG}"
+          sleep 3
+          RESPONSE=$(curl --fail http://localhost:8080/ping) || (docker logs simeis-test && exit 1)
+          echo "$RESPONSE" | jq -e '.ping == "pong"' || (echo "Réponse inattendue : $RESPONSE" && exit 1)
+          docker stop simeis-test
+          docker rm simeis-test
 
       # comme artefact de la release et la réutiliser sans registry.
       - name: Exporter l'image Docker
+        id: docker_save
         run: |
           TAG="${{ steps.version.outputs.tag }}"
-          docker image save "simeis-server:${TAG}" -o "simeis-server_${TAG}.tar"
+          ARCHIVE="simeis-server_${TAG}.tar"
+          docker image save "simeis-server:${TAG}" -o "${ARCHIVE}"
+          echo "archive=${ARCHIVE}" >> "$GITHUB_OUTPUT"
  
-      # On utilise l'image prebuilt sur ghcr.io pour éviter le build du
-      # Dockerfile de l'action, qui échoue car Debian Buster est en fin de vie
-      # et ses dépôts apt ne répondent plus.
+      - name: Pousser l'image sur DockerHub
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          echo "${{ secrets.DOCKERHUB_WILLIAM_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}" --password-stdin
+          docker tag "simeis-server:${TAG}" "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}/simeis-server:${TAG}"
+          docker tag "simeis-server:${TAG}" "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}/simeis-server:latest"
+          docker push "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}/simeis-server:${TAG}"
+          docker push "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}/simeis-server:latest"
+
       - name: Créer / mettre à jour la release
         uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
@@ -380,8 +394,8 @@ jobs:
           body: ${{ steps.read_changelog.outputs.content }}
           files: |
             ${{ steps.version.outputs.pkg }}.deb
-            /tmp/simeis-server.1
             doc/manual.pdf
+            ${{ steps.docker_save.outputs.archive }}
  
           clear_attachments: true
           prerelease: false

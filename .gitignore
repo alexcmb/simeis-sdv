@@ -4,3 +4,5 @@ result
 *.zip
 .~lock.*.ods#
 scores.json
+*.deb
+*.Zone.Identifier

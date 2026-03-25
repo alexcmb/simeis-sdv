@@ -1,0 +1,22 @@
+services:
+  simeis-server:
+    image: berowilliam/simeis-server:latest
+    container_name: simeis-server
+    ports:
+      - "8080:8080"
+    networks:
+      - simeis-net
+
+  simeis-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: simeis-client
+    depends_on:
+      - simeis-server
+    networks:
+      - simeis-net
+    command: ["python3", "client.py", "william"]
+
+networks:
+  simeis-net:
