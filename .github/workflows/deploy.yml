@@ -14,8 +14,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_WILLIAM }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          echo "${{ secrets.KNOW_HOST_WILLIAM }}" >> ~/.ssh/known_hosts
+           ssh-keyscan -p ${{ secrets.HOST_PORT }}" -H "{{ secrets.HOST_IP }}" >> ~/.ssh/known_hosts
 
       - name: connexion ssh
-        run: ssh -i ~/.ssh/id_rsa  -p 22222 william@78.123.114.124 "echo OK"
+        run: ssh -i ~/.ssh/id_rsa  -p "${{ secrets.HOST_PORT }}" william@"${{ secrets.HOST_IP }}" "echo OK"
       
