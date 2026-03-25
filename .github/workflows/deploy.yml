@@ -12,8 +12,7 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.SSH_WILLIAM }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-
-        ssh-keyscan -p ${{ secrets.HOST_PORT }} ${{ secrets.HOST_IP }} >> ~/.ssh/known_hosts
+        echo "${{KNOW_HOST_WILLIAM}}" >> ~/.ssh/known_hosts
   
     - name: test key
       run: cat ~/.ssh/known_hosts
