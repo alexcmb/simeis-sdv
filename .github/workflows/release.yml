@@ -262,7 +262,6 @@ jobs:
           SERVER_HOST_KEY: ${{ secrets.SERVER_HOST_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" | ssh-add -
           eval $(ssh-agent -s)
           echo "$SSH_PRIVATE_KEY" | ssh-add -
           echo "[78.123.114.124]:22222 ssh-ed25519 $SERVER_HOST_KEY" >> ~/.ssh/known_hosts
