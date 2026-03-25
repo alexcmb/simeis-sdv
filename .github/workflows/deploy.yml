@@ -34,8 +34,7 @@ jobs:
     #     william@${{ secrets.HOST_IP }}:${{ steps.url.outputs.deb_file }}
     - name: Test SSH command
       run: |
-        ssh -i -vvv ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
-          -o StrictHostKeyChecking=no \
+        ssh  -vvv -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
           william@${{ secrets.HOST_IP }} "echo hello"
 
     # - name: Deploy
