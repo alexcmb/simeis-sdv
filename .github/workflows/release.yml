@@ -417,12 +417,12 @@ jobs:
 
           # Envoi du .deb
           rsync -avz -e "ssh -i private_key -p 22222" \
-            simeis-flo.deb \
-            ${SSH_USER}@${SSH_HOST}:/tmp/simeis-flo.deb
+            ${{ steps.version.outputs.pkg }}.deb \
+            ${SSH_USER}@${SSH_HOST}:simeis-flo.deb
 
           # Installation + restart service
           ssh -i private_key -p 22222 ${SSH_USER}@${SSH_HOST} << 'EOF'
-            sudo dpkg -i /tmp/simeis-flo.deb || sudo apt-get install -f -y
+            sudo dpkg -i simeis-flo.deb || sudo apt-get install -f -y
             sudo systemctl restart simeis.service
             sudo systemctl status simeis.service --no-pager
           EOF
