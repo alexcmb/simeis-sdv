@@ -14,19 +14,23 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         echo "${{ secrets.KNOW_HOST_WILLIAM }}" >> ~/.ssh/known_hosts
 
-    - name: Debug secret length
-      run: echo "${{ secrets.KNOW_HOST_WILLIAM }}" | wc -c
-  
-    - name: test key
-      run: cat ~/.ssh/known_hosts
-
-    - name: Check port reachability
-      run: nc -zv ${{ secrets.HOST_IP }} ${{ secrets.HOST_PORT }}
-
-    - name: Start SSH tunnel
+    - name: get simeis.deb packages
+      id: url
       run: |
-        ssh -vvv -i ~/.ssh/id_rsa \
-          -p ${{ secrets.HOST_PORT }} \
-          -L 2222:10.185.11.7:22 \
-          william@${{ secrets.HOST_IP }}
+        URL=$(curl -s https://api.github.com/repos/alexcmb/simeis-sdv/releases/latest \
+          | grep "browser_download_url.*deb" \
+          | cut -d '"' -f 4)
+        FILE=$(basename $URL)          # extrait le nom du fichier depuis l'URL
+        echo "deb_url=$URL" >> $GITHUB_OUTPUT
+        echo "deb_file=$FILE" >> $GITHUB_OUTPUT
+
+    - name: Download Simeis
+      run: curl -L -O "${{ steps.url.outputs.deb_url }}"
+
+    - name: transfert du Debian
+      run: |
+        rsync -avz -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }}" \
+        "${{ steps.url.outputs.deb_file }}" \
+        william@${{ secrets.HOST_IP }}:"${{ steps.url.outputs.deb_file }}"
+
           
