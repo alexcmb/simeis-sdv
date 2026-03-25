@@ -9,13 +9,18 @@ jobs:
     container:
       image: testcontainers/sshd:1.3.0
     steps:
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_WILLIAM }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-           ssh-keyscan -p ${{ secrets.HOST_PORT }}" -H "{{ secrets.HOST_IP }}" >> ~/.ssh/known_hosts
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_WILLIAM }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
 
-      - name: connexion ssh
-        run: ssh -i ~/.ssh/id_rsa  -p "${{ secrets.HOST_PORT }}" william@"${{ secrets.HOST_IP }}" "echo OK"
+        ssh-keyscan -p ${{ secrets.HOST_PORT }} -H ${{ secrets.HOST_IP }} >> ~/.ssh/known_hosts
+
+    - name: connexion ssh
+      run: |
+        ssh -i ~/.ssh/id_rsa \
+          -p ${{ secrets.HOST_PORT }} \
+          william@${{ secrets.HOST_IP }} \
+          "echo OK"
       
