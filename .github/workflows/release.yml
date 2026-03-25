@@ -410,7 +410,7 @@ jobs:
             sudo systemctl restart simeis
           "
 
-      # Vérification que le service répond bien avec la bonne version
+      # Vérification que le service répond bien avec la bonne versionlll
       - name: Check deployed version
         run: |
           PORT=3000  # à adapter si besoin
