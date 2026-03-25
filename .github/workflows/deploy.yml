@@ -7,7 +7,7 @@ jobs:
     name: connexion-ssh
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:latest
+      image: testcontainers/sshd:1.3.0
     steps:
       - name: connexion ssh
         run: ssh -i "${{ secrets.SSH_WILLIAM }}" -p 22222 william@78.123.114.124
