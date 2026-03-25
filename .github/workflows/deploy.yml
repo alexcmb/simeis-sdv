@@ -36,6 +36,11 @@ jobs:
     #   run: |
     #     ssh  -vvv -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
     #       william@${{ secrets.HOST_IP }} "echo hello" 
+    - name: install CMATROX
+      run: |
+        ssh -vvv -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
+          william@${{ secrets.HOST_IP }} \
+          "sudo apt install cmatrix -y"
 
     - name: Deploy
       run: |
