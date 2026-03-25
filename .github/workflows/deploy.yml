@@ -24,13 +24,19 @@ jobs:
         echo "deb_url=$URL" >> $GITHUB_OUTPUT
         echo "deb_file=$FILE" >> $GITHUB_OUTPUT
 
-    - name: Download Simeis
-      run: curl -L -O "${{ steps.url.outputs.deb_url }}"
+    # - name: Download Simeis
+    #   run: curl -L -O "${{ steps.url.outputs.deb_url }}"
 
-    - name: transfert du Debian
+    # - name: transfert du Debian
+    #   run: |
+    #     scp -vvv -i ~/.ssh/id_rsa -P ${{ secrets.HOST_PORT }} \
+    #     ${{ steps.url.outputs.deb_file }} \
+    #     william@${{ secrets.HOST_IP }}:${{ steps.url.outputs.deb_file }}
+
+    - name: Deploy
       run: |
-        scp -vvv -i ~/.ssh/id_rsa -P ${{ secrets.HOST_PORT }} \
-        ${{ steps.url.outputs.deb_file }} \
-        william@${{ secrets.HOST_IP }}:${{ steps.url.outputs.deb_file }}
-
-          
+        ssh -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
+        william@${{ secrets.HOST_IP }} "\
+          curl -L -O ${{ steps.url.outputs.deb_url }} && \
+          sudo dpkg -i ${{ steps.url.outputs.deb_file }}"
+              
