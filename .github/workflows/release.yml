@@ -276,7 +276,7 @@ jobs:
 
       - name: Construire le paquet .deb
         run: |
-          PKG="${{ steps.version.outputs.pkg }}"
+          PKG="simeis-flo"
           fakeroot dpkg-deb --build "${PKG}"
           ls -lh "${PKG}.deb"
 
@@ -399,3 +399,38 @@ jobs:
  
           clear_attachments: true
           prerelease: false
+
+
+#### Déploiement Semeis
+
+      - name: Déployer sur le serveur distant
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY_FLO }}
+          SSH_USER: ${{ secrets.SSH_USER_FLO }}
+          SSH_HOST: ${{ secrets.HOST_IP }}
+        run: |
+          echo "$SSH_KEY" > private_key
+          chmod 600 private_key
+
+          # Ajout du serveur dans known_hosts
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 22222 $SSH_HOST >> ~/.ssh/known_hosts
+
+          # Envoi du .deb
+          rsync -avz -e "ssh -i private_key -p 22222" \
+            simeis-flo.deb \
+            ${SSH_USER}@${SSH_HOST}:/tmp/simeis-flo.deb
+
+          # Installation + restart service
+          ssh -i private_key -p 22222 ${SSH_USER}@${SSH_HOST} << 'EOF'
+            sudo dpkg -i /tmp/simeis-flo.deb || sudo apt-get install -f -y
+            sudo systemctl restart simeis.service
+            sudo systemctl status simeis.service --no-pager
+          EOF
+
+      - name: Tester le serveur déployé
+        run: |
+          sleep 5
+          RESPONSE=$(curl --fail http://78.123.114.124:8082/ping) || exit 1
+          echo "$RESPONSE"
+          echo "$RESPONSE" | jq -e '.ping == "pong"'
