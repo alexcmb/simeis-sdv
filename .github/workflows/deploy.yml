@@ -23,12 +23,13 @@ jobs:
     - name: Check port reachability
       run: nc -zv ${{ secrets.HOST_IP }} ${{ secrets.HOST_PORT }}
 
-    - name: connexion ssh
+    - name: SSH debug
       run: |
-        ssh \
+        ssh -vvv \
           -o UserKnownHostsFile=~/.ssh/known_hosts \
           -o StrictHostKeyChecking=yes \
           -i ~/.ssh/id_rsa \
           -p ${{ secrets.HOST_PORT }} \
-          william@${{ secrets.HOST_IP }}
-      
+          william@${{ secrets.HOST_IP }} \
+          "echo OK"
+          
