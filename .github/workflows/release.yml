@@ -1,4 +1,3 @@
-#WILLIAM d
 name: Release Artifacts
 
 # Se déclenche quand une PR est fermée sur une branche release/x.
@@ -360,9 +359,9 @@ jobs:
       - name: Tester l'image Docker
         run: |
           TAG="${{ steps.version.outputs.tag }}"
-          docker run -d --name simeis-test -p 8082:8082 "simeis-server:${TAG}"
+          docker run -d --name simeis-test -p 8080:8080 "simeis-server:${TAG}"
           sleep 3
-          RESPONSE=$(curl --fail http://localhost:8082/ping) || (docker logs simeis-test && exit 1)
+          RESPONSE=$(curl --fail http://localhost:8080/ping) || (docker logs simeis-test && exit 1)
           echo "$RESPONSE" | jq -e '.ping == "pong"' || (echo "Réponse inattendue : $RESPONSE" && exit 1)
           docker stop simeis-test
           docker rm simeis-test
