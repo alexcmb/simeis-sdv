@@ -35,7 +35,7 @@ jobs:
     # - name: Test SSH command
     #   run: |
     #     ssh  -vvv -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
-    #       william@${{ secrets.HOST_IP }} "echo hello"
+    #       william@${{ secrets.HOST_IP }} "echo hello" 
 
     - name: Deploy
       run: |
