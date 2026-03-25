@@ -259,9 +259,10 @@ jobs:
       - name: Deploy .deb via SSH/SCP
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_ALEX }}
+          SUDO_PASSWORD: ${{ secrets.SUDO_PASSWORD }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -P 22222 build-artifacts/*.deb alexandre@78.123.114.124:/tmp/
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124 "sudo dpkg -i /tmp/*.deb && sudo systemctl restart simeis-server"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124 "echo '$SUDO_PASSWORD' | sudo -S dpkg -i /tmp/*.deb && echo '$SUDO_PASSWORD' | sudo -S systemctl restart simeis-server"
