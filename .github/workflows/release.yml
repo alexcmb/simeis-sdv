@@ -37,6 +37,10 @@ jobs:
       - name: Installer fakeroot et lintian
         run: sudo apt-get install -y fakeroot
 
+        # Installer rsync (nécessaire pour le déploiement)
+      - name: Installer rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
       # rustup est déjà présent sur les runners GitHub, on s'assure juste
       # d'être sur stable avant de lancer le build.
       - name: Mettre à jour la toolchain Rust stable
