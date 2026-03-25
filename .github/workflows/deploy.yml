@@ -31,7 +31,7 @@ jobs:
     #   run: |
     #     scp -vvv -i ~/.ssh/id_rsa -P ${{ secrets.HOST_PORT }} \
     #     ${{ steps.url.outputs.deb_file }} \
-    #     william@${{ secrets.HOST_IP }}:${{ steps.url.outputs.deb_file }}
+    #     william@${{ secrets.HOST_IP }}:${{ steps.url.outputs.deb_file }} d
     - name: Test SSH command
       run: |
         ssh  -vvv -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
