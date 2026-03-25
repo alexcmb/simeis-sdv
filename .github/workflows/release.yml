@@ -267,16 +267,9 @@ jobs:
       - name: Copy .deb via SCP
         run: |
           DEB_FILE=$(ls build-artifacts/*.deb | head -n 1)
-          (
-            echo "base64 -d > /tmp/simeis-server.deb << 'EOF_DEB'"
-            base64 "$DEB_FILE"
-            echo "EOF_DEB"
-            echo "exit"
-          ) | ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124
+          echo "put $DEB_FILE /tmp/simeis-server.deb" > sftp_batch
+          sftp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -P 22222 -b sftp_batch alexandre@78.123.114.124
 
       - name: Install and restart
         run: |
-          (
-            echo "sudo dpkg -i /tmp/simeis-server.deb && sudo systemctl restart simeis-server"
-            echo "exit"
-          ) | ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124 "ls -lh /tmp/simeis-server.deb && sudo dpkg -i /tmp/simeis-server.deb && sudo systemctl restart simeis-server"
