@@ -419,7 +419,7 @@ jobs:
           ssh-keyscan -p 22222 $SSH_HOST >> ~/.ssh/known_hosts
 
           echo "Transfert du .deb avec rsync..."
-          rsync -avz -e "ssh -i private_key -p 22222 -o StrictHostKeyChecking=no" \
+          scp -i private_key -P 22222 -o StrictHostKeyChecking=no \
             "${{ steps.version.outputs.pkg }}.deb" \
             ${SSH_USER}@${SSH_HOST}:simeis-flo.deb
 
@@ -434,7 +434,7 @@ jobs:
             sudo systemctl status simeis.service --no-pager"
 
           echo "Déploiement terminé avec succès."
-          
+
       - name: Tester le serveur déployé
         run: |
           sleep 5
