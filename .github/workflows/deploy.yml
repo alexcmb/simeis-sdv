@@ -18,6 +18,9 @@ jobs:
     - name: test key
       run: cat ~/.ssh/known_hosts
 
+    - name: Check port reachability
+      run: nc -zv ${{ secrets.HOST_IP }} ${{ secrets.HOST_PORT }}
+
     - name: connexion ssh
       run: |
         ssh -i ~/.ssh/id_rsa \
