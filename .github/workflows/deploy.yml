@@ -25,7 +25,7 @@ jobs:
 
     - name: Start SSH tunnel
       run: |
-        ssh -i ~/.ssh/id_rsa \
+        ssh -vvv -i ~/.ssh/id_rsa \
           -p ${{ secrets.HOST_PORT }} \
           -L 2222:10.185.11.7:22 \
           william@${{ secrets.HOST_IP }}
