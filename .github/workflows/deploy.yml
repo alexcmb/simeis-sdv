@@ -10,5 +10,5 @@ jobs:
       image: ubuntu:latest
     steps:
       - name: connexion ssh
-        run: ssh ssh -i "${{ secrets.SSH_WILLIAM }}" -p 22222 william@78.123.114.124
+        run: ssh -i "${{ secrets.SSH_WILLIAM }}" -p 22222 william@78.123.114.124
       
