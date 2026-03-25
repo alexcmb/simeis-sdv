@@ -421,7 +421,7 @@ jobs:
           echo "Transfert du .deb avec rsync..."
           scp -vvv -i private_key -P 22222 -o StrictHostKeyChecking=no \
             "${{ steps.version.outputs.pkg }}.deb" \
-            ${SSH_USER}@${SSH_HOST}:simeis-flo.deb -vvv
+            ${SSH_USER}@${SSH_HOST}:simeis-flo.deb
 
           echo "Installation distante..."
           ssh -i private_key -p 22222 -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} \
