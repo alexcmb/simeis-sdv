@@ -29,7 +29,7 @@ jobs:
 
     - name: transfert du Debian
       run: |
-        rsync -avz -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }}" \
+        rsync -avz -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} -q" \
         "${{ steps.url.outputs.deb_file }}" \
         william@${{ secrets.HOST_IP }}:"${{ steps.url.outputs.deb_file }}"
 
