@@ -29,7 +29,7 @@ jobs:
 
     - name: transfert du Debian
       run: |
-        scp -i ~/.ssh/id_rsa -P ${{ secrets.HOST_PORT }} \
+        scp -vvv -i ~/.ssh/id_rsa -P ${{ secrets.HOST_PORT }} \
         ${{ steps.url.outputs.deb_file }} \
         william@${{ secrets.HOST_IP }}:${{ steps.url.outputs.deb_file }}
 
