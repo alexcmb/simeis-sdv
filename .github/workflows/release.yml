@@ -259,18 +259,16 @@ jobs:
       - name: Setup SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_ALEX }}
-          SERVER_HOST_KEY: ${{ secrets.SERVER_HOST_KEY }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          echo "[78.123.114.124]:22222 ssh-ed25519 $SERVER_HOST_KEY" >> ~/.ssh/known_hosts
 
       - name: Copy .deb via SCP
         run: |
-          ssh -i ~/.ssh/id_rsa -p 22222 alexandre@78.123.114.124 "touch ~/.hushlogin"
-          scp -i ~/.ssh/id_rsa -P 22222 -O build-artifacts/*.deb alexandre@78.123.114.124:/tmp/
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124 "touch ~/.hushlogin"
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -P 22222 -O build-artifacts/*.deb alexandre@78.123.114.124:/tmp/
 
       - name: Install and restart
         run: |
-          ssh -i ~/.ssh/id_rsa -p 22222 alexandre@78.123.114.124 "ls -lh /tmp/*.deb && sudo dpkg -i /tmp/*.deb && sudo systemctl restart simeis-server"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124 "ls -lh /tmp/*.deb && sudo dpkg -i /tmp/*.deb && sudo systemctl restart simeis-server"
