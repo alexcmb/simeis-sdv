@@ -400,7 +400,7 @@ jobs:
           prerelease: false
 
 
-#### Déploiement Semeis
+# Déploiement Semeis
 
       - name: Déployer sur le serveur distant (verbeux)
         env:
@@ -408,35 +408,33 @@ jobs:
           SSH_USER: ${{ secrets.SSH_USER_FLO }}
           SSH_HOST: ${{ secrets.HOST_IP }}
         run: |
-          set -xe  # active le mode verbeux et exit en cas d'erreur
+          set -xe
 
-          echo "Création du fichier de clé privée..."
+          echo "Création de la clé privée..."
           echo "$SSH_KEY" > private_key
           chmod 600 private_key
 
-          echo "Ajout du serveur ${SSH_HOST} dans known_hosts..."
+          echo "Ajout du serveur dans known_hosts..."
           mkdir -p ~/.ssh
           ssh-keyscan -p 22222 $SSH_HOST >> ~/.ssh/known_hosts
-          echo "Known_hosts mis à jour."
 
-          echo "Transfert du paquet .deb sur le serveur..."
+          echo "Transfert du .deb avec rsync..."
           rsync -avz -e "ssh -i private_key -p 22222 -o StrictHostKeyChecking=no" \
             "${{ steps.version.outputs.pkg }}.deb" \
             ${SSH_USER}@${SSH_HOST}:simeis-flo.deb
-          echo "Transfert terminé."
 
-          echo "Installation du paquet et résolution des dépendances..."
-          ssh -i private_key -p 22222 -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} << 'EOF'
-            set -xe
-            echo "Installation du paquet .deb..."
-            sudo dpkg -i simeis-flo.deb || sudo apt-get install -f -y
-            echo "Redémarrage du service simeis..."
-            sudo systemctl restart simeis.service
-            echo "État du service après redémarrage :"
-            sudo systemctl status simeis.service --no-pager
-      EOF
+          echo "Installation distante..."
+          ssh -i private_key -p 22222 -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} \
+            "set -xe && \
+            echo 'Installation du paquet' && \
+            sudo dpkg -i simeis-flo.deb || sudo apt-get install -f -y && \
+            echo 'Restart service' && \
+            sudo systemctl restart simeis.service && \
+            echo 'Status service' && \
+            sudo systemctl status simeis.service --no-pager"
 
-    echo "Déploiement terminé avec succès."
+          echo "Déploiement terminé avec succès."
+          
       - name: Tester le serveur déployé
         run: |
           sleep 5
