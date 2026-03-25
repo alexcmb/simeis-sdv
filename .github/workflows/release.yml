@@ -266,9 +266,8 @@ jobs:
 
       - name: Copy .deb via SCP
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124 "touch ~/.hushlogin"
-          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -P 22222 -O build-artifacts/*.deb alexandre@78.123.114.124:/tmp/
+          cat build-artifacts/*.deb | ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124 "cat > /tmp/simeis-server.deb"
 
       - name: Install and restart
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124 "ls -lh /tmp/*.deb && sudo dpkg -i /tmp/*.deb && sudo systemctl restart simeis-server"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new -p 22222 alexandre@78.123.114.124 "ls -lh /tmp/*.deb && sudo dpkg -i /tmp/simeis-server.deb && sudo systemctl restart simeis-server"
