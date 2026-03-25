@@ -35,7 +35,7 @@ jobs:
 
     - name: Deploy
       run: |
-        ssh -vvv -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
+        ssh -tt -vvv -i ~/.ssh/id_rsa -p ${{ secrets.HOST_PORT }} \
         william@${{ secrets.HOST_IP }} "\
           curl -L -O ${{ steps.url.outputs.deb_url }} && \
           sudo dpkg -i ${{ steps.url.outputs.deb_file }}"
