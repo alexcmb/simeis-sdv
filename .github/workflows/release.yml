@@ -386,7 +386,7 @@ jobs:
           docker push "${{ secrets.DOCKERHUB_WILLIAM_USERNAME }}/simeis-server:latest"
 
       - name: Créer / mettre à jour la release
-        uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.3
+        uses: docker://ghcr.io/mini-bomba/create-github-release:v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.version.outputs.tag }}
