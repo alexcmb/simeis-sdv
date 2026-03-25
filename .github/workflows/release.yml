@@ -433,7 +433,8 @@ jobs:
             echo 'Status service' && \
             sudo systemctl status simeis.service --no-pager"
 
-    echo "Déploiement terminé avec succès."
+          echo "Déploiement terminé avec succès."
+          
       - name: Tester le serveur déployé
         run: |
           sleep 5
