@@ -15,6 +15,11 @@ jobs:
           echo "${{ secrets.SSH_WILLIAM }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p 22222 -H 78.123.114.124 >> ~/.ssh/known_hosts
+
       - name: connexion ssh
-        run: ssh -i ~/.ssh/id_rsa  -p 22222 william@78.123.114.124
+        run: ssh -i ~/.ssh/id_rsa  -p 22222 william@78.123.114.124 "echo OK"
       
