@@ -265,5 +265,5 @@ jobs:
           eval $(ssh-agent -s)
           echo "$SSH_PRIVATE_KEY" | ssh-add -
           echo "[78.123.114.124]:22222 ssh-ed25519 $SERVER_HOST_KEY" >> ~/.ssh/known_hosts
-          scp -P 22222 build-artifacts/*.deb alexandre@78.123.114.124:/tmp/
-          ssh -p 22222 alexandre@78.123.114.124 "sudo dpkg -i /tmp/*.deb && sudo systemctl restart simeis-server"
+          scp -v -P 22222 build-artifacts/*.deb alexandre@78.123.114.124:/tmp/
+          ssh -v -p 22222 alexandre@78.123.114.124 "sudo dpkg -i /tmp/*.deb && sudo systemctl restart simeis-server"
