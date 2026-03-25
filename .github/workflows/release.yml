@@ -256,14 +256,20 @@ jobs:
           name: build-artifacts
           path: build-artifacts
 
-      - name: Deploy .deb via SSH/SCP
+      - name: Setup SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY_ALEX }}
           SERVER_HOST_KEY: ${{ secrets.SERVER_HOST_KEY }}
         run: |
           mkdir -p ~/.ssh
           eval $(ssh-agent -s)
-          echo "$SSH_PRIVATE_KEY" | ssh-add -
-          echo "[78.123.114.124]:22222 ssh-ed25519 $SERVER_HOST_KEY" >> ~/.ssh/known_hosts
+              echo "$SSH_PRIVATE_KEY" | ssh-add -
+              echo "[78.123.114.124]:22222 ssh-ed25519 $SERVER_HOST_KEY" >> ~/.ssh/known_hosts
+
+      - name: Copy .deb via SCP
+        run: |
           scp -P 22222 -O build-artifacts/*.deb alexandre@78.123.114.124:/tmp/
-          ssh -v -p 22222 alexandre@78.123.114.124 "ls -lh /tmp/*.deb && sudo dpkg -i /tmp/*.deb && sudo systemctl restart simeis-server"
+
+      - name: Install and restart
+        run: |
+              ssh -p 22222 alexandre@78.123.114.124 "ls -lh /tmp/*.deb && sudo dpkg -i /tmp/*.deb && sudo systemctl restart simeis-server"
