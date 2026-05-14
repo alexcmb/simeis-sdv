@@ -399,3 +399,42 @@ jobs:
  
           clear_attachments: true
           prerelease: false
+
+      # Configuration SSH pour accéder au VPS
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ vars.VPS_IP }} >> ~/.ssh/known_hosts
+
+      # Envoi du paquet sur le serveur
+      - name: Upload package
+        run: |
+          scp -P ${{ secrets.SSH_PORT }} \
+          "${{ steps.version.outputs.pkg }}.deb" \
+          ${{ secrets.SSH_USER }}@${{ vars.VPS_IP }}:/tmp/
+
+      # Installation du paquet et redémarrage du service
+      - name: Install on VPS
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} \
+          ${{ secrets.SSH_USER }}@${{ vars.VPS_IP }} "
+            sudo dpkg -i /tmp/${{ steps.version.outputs.pkg }}.deb || sudo apt-get install -f -y
+            sudo systemctl restart simeis
+          "
+
+      # Vérification que le service répond bien avec la bonne versionlll
+      - name: Check deployed version
+        run: |
+          PORT=3000  # à adapter si besoin
+
+          sleep 5
+
+          VERSION=$(curl -s http://${{ vars.VPS_IP }}:$PORT/version)
+          echo "Version retournée: $VERSION"
+
+          if [ "$VERSION" != "${{ steps.version.outputs.version }}" ]; then
+            echo "Version incorrecte"
+            exit 1
+          fi
